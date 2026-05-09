@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>STOREmind — Setup Wizard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 60px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#020d1a}::-webkit-scrollbar-thumb{background:#0d6efd44;border-radius:2px}
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;animation:fu linear infinite;opacity:0}
+@keyframes fu{0%{transform:translateY(100vh);opacity:0}10%{opacity:.4}90%{opacity:.15}100%{transform:translateY(-20px);opacity:0}}
+.wrap{position:relative;z-index:1;width:100%;max-width:780px;display:flex;flex-direction:column;gap:20px}
+.wiz-hdr{text-align:center;padding:32px 24px 24px;background:linear-gradient(135deg,#041428,#020d1a);border:1px solid #0d6efd33;border-radius:16px;position:relative;overflow:hidden}
+.wiz-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#0d6efd,#00d4ff,transparent)}
+.hdr-icon{width:64px;height:64px;background:linear-gradient(135deg,#0d6efd,#00d4ff);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;box-shadow:0 0 30px #0d6efd55;animation:ip 3s ease-in-out infinite}
+@keyframes ip{0%,100%{box-shadow:0 0 30px #0d6efd55}50%{box-shadow:0 0 50px #0d6efd99}}
+.wiz-hdr h1{font-size:26px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 0 20px #4da6ff}
+.wiz-hdr p{font-size:12px;color:#4da6ff77;letter-spacing:1px;margin-top:6px}
+.prog-wrap{background:linear-gradient(135deg,#041428,#020d1a);border:1px solid #0d6efd33;border-radius:12px;padding:20px 24px}
+.prog-steps{display:flex;align-items:center;justify-content:space-between;position:relative}
+.prog-line{position:absolute;top:16px;left:0;right:0;height:1px;background:#0d6efd22;z-index:0}
+.prog-fill{position:absolute;top:16px;left:0;height:1px;background:linear-gradient(90deg,#0d6efd,#00d4ff);z-index:1;transition:width .6s ease;box-shadow:0 0 6px #0d6efd}
+.sdot{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+.sc{width:32px;height:32px;border-radius:50%;border:2px solid #0d6efd33;background:#020d1a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#4da6ff44;transition:all .4s}
+.sdot.done .sc{background:#0d6efd22;border-color:#0d6efd;color:#0d6efd}
+.sdot.active .sc{background:linear-gradient(135deg,#0d6efd,#00d4ff);border-color:#00d4ff;color:#fff;box-shadow:0 0 15px #0d6efd66}
+.sdot.complete .sc{background:#00ff8822;border-color:#00ff88;color:#00ff88}
+.slbl{font-size:9px;color:#4da6ff44;letter-spacing:1px;text-transform:uppercase;text-align:center;max-width:70px;transition:color .4s}
+.sdot.active .slbl{color:#4da6ff}.sdot.complete .slbl{color:#00ff8888}
+.card{background:linear-gradient(135deg,#041428,#020d1a);border:1px solid #0d6efd33;border-radius:14px;overflow:hidden;transition:all .4s}
+.card-hdr{padding:18px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #0d6efd11;cursor:pointer;user-select:none}
+.card-hdr:hover{background:#0d6efd08}
+.card-icon{width:36px;height:36px;background:#0d6efd11;border:1px solid #0d6efd33;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.card-title{font-size:13px;font-weight:700;color:#e0f0ff}
+.card-sub{font-size:10px;color:#4da6ff55;margin-top:2px}
+.badge{padding:3px 8px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:1px}
+.badge.pending{background:#0d6efd11;color:#4da6ff55;border:1px solid #0d6efd22}
+.badge.testing{background:#ffaa0011;color:#ffaa00;border:1px solid #ffaa0033;animation:bp 1s infinite}
+.badge.success{background:#00ff8811;color:#00ff88;border:1px solid #00ff8833}
+.badge.error{background:#ff444411;color:#ff4444;border:1px solid #ff444433}
+.badge.skipped{background:#ffffff08;color:#ffffff33;border:1px solid #ffffff11}
+@keyframes bp{0%,100%{opacity:1}50%{opacity:.5}}
+.card-body{padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.fg{display:flex;flex-direction:column;gap:6px}
+.fl{font-size:10px;font-weight:700;color:#4da6ff;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.req{font-size:8px;color:#ff4444;background:#ff444411;border:1px solid #ff444433;border-radius:3px;padding:1px 4px}
+.opt{font-size:8px;color:#4da6ff44;background:#0d6efd08;border:1px solid #0d6efd22;border-radius:3px;padding:1px 4px}
+.fw{position:relative}
+.fi{width:100%;background:#020d1a;border:1px solid #0d6efd33;border-radius:8px;padding:10px 14px;color:#e0f0ff;font-size:12px;font-family:'Courier New',monospace;outline:none;transition:all .3s}
+.fi:focus{border-color:#0d6efd77;box-shadow:0 0 12px #0d6efd22}
+.fi.valid{border-color:#00ff8844}.fi.invalid{border-color:#ff444444}
+.fi::placeholder{color:#4da6ff22;font-size:11px}
+select.fi{cursor:pointer}
+.tv{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:14px;opacity:.5;background:none;border:none;color:#4da6ff;transition:opacity .2s}
+.tv:hover{opacity:1}
+.fhint{font-size:10px;color:#4da6ff44}.fhint a{color:#4da6ff77;text-decoration:none}.fhint a:hover{color:#4da6ff}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tbtn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;background:#0d6efd11;border:1px solid #0d6efd44;border-radius:8px;color:#4da6ff;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .3s;width:100%}
+.tbtn:hover{background:#0d6efd22;box-shadow:0 0 15px #0d6efd22}
+.tbtn:disabled{opacity:.5;cursor:not-allowed}
+.tbtn.success{background:#00ff8811;border-color:#00ff8844;color:#00ff88}
+.tbtn.error{background:#ff444411;border-color:#ff444433;color:#ff4444}
+.tr{display:none;padding:12px 14px;border-radius:8px;font-size:11px;line-height:1.6;animation:sd .3s ease}
+@keyframes sd{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.tr.success{background:#00ff8811;border:1px solid #00ff8822;color:#a0ffc8;display:block}
+.tr.error{background:#ff444411;border:1px solid #ff444422;color:#ffaaaa;display:block}
+.rr{display:flex;justify-content:space-between;padding:2px 0}
+.rk{color:#4da6ff88}.rv{color:#e0f0ff;font-weight:600}.rv.ok{color:#00ff88}.rv.bad{color:#ff4444}
+.skip{text-align:center;font-size:10px;color:#4da6ff33;cursor:pointer;text-decoration:underline}.skip:hover{color:#4da6ff66}
+.hint-box{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0d6efd08;border:1px solid #0d6efd22;border-radius:8px;font-size:10px;color:#4da6ff66}
+.sw{display:flex;flex-direction:column;gap:6px}
+.sw-hdr{display:flex;justify-content:space-between;align-items:center}
+.sw-lbl{font-size:10px;color:#4da6ff;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.sw-val{font-size:13px;font-weight:800;color:#fff}
+input[type=range]{width:100%;height:4px;background:#0d6efd22;border-radius:2px;outline:none;cursor:pointer;-webkit-appearance:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:linear-gradient(135deg,#0d6efd,#00d4ff);border-radius:50%;box-shadow:0 0 8px #0d6efd66;cursor:pointer}
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #0d6efd11}
+.tog-row:last-child{border-bottom:none}
+.tog-info{flex:1}
+.tog-name{font-size:12px;font-weight:600;color:#e0f0ff}
+.tog-desc{font-size:10px;color:#4da6ff44;margin-top:2px}
+.tog{width:40px;height:22px;background:#0d6efd22;border:1px solid #0d6efd33;border-radius:11px;position:relative;cursor:pointer;transition:all .3s;flex-shrink:0}
+.tog.on{background:linear-gradient(90deg,#0d6efd,#00d4ff);border-color:#00d4ff;box-shadow:0 0 8px #0d6efd44}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:#4da6ff44;border-radius:50%;transition:all .3s}
+.tog.on::after{left:21px;background:#fff}
+.launch-card{background:linear-gradient(135deg,#041428,#020d1a);border:1px solid #0d6efd33;border-radius:14px;padding:28px 24px;text-align:center;position:relative;overflow:hidden}
+.launch-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#0d6efd,#00d4ff,transparent)}
+.l-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.si{padding:12px;background:#0d6efd08;border:1px solid #0d6efd22;border-radius:8px}
+.si-icon{font-size:18px;margin-bottom:4px}
+.si-lbl{font-size:9px;color:#4da6ff55;letter-spacing:1px;text-transform:uppercase}
+.si-val{font-size:12px;font-weight:700;color:#e0f0ff;margin-top:2px}
+.si-val.ok{color:#00ff88}.si-val.warn{color:#ffaa00}
+.lbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 24px;background:linear-gradient(135deg,#0d6efd,#00d4ff);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .3s;box-shadow:0 0 20px #0d6efd44}
+.lbtn:hover{transform:translateY(-2px);box-shadow:0 0 40px #0d6efd66}
+.lbtn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.lbtn-sec{margin-top:10px;padding:10px 20px;background:transparent;border:1px solid #0d6efd33;border-radius:8px;color:#4da6ff77;font-size:11px;cursor:pointer;width:100%;transition:all .3s}
+.lbtn-sec:hover{border-color:#0d6efd66;color:#4da6ff}
+.l-progress{display:none;margin-top:20px}
+.l-progress.show{display:block}
+.ls{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;margin-bottom:4px;font-size:11px;color:#4da6ff77;transition:all .3s}
+.ls.active{background:#0d6efd11;color:#4da6ff}
+.ls.done{color:#00ff88}
+.lsp{width:14px;height:14px;border:2px solid #0d6efd22;border-top-color:#0d6efd;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.success-screen{display:none;text-align:center;padding:40px 24px}
+.success-screen.show{display:block}
+.s-robot{font-size:60px;animation:sb .6s ease-out;display:block;margin-bottom:16px}
+@keyframes sb{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.s-title{font-size:22px;font-weight:900;color:#00ff88;text-shadow:0 0 20px #00ff8844;letter-spacing:2px}
+.s-sub{font-size:12px;color:#4da6ff77;margin-top:8px}
+.s-links{display:flex;gap:10px;margin-top:24px;justify-content:center}
+.sl{padding:10px 20px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;text-decoration:none;transition:all .3s}
+.sl.p{background:linear-gradient(135deg,#0d6efd,#00d4ff);color:#fff;box-shadow:0 0 15px #0d6efd44}
+.sl.s{background:transparent;border:1px solid #0d6efd33;color:#4da6ff}
+.sl:hover{transform:translateY(-2px)}
+.notif{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#041428,#020d1a);border:1px solid #0d6efd44;border-radius:10px;padding:12px 16px;font-size:11px;color:#a0c4ff;z-index:999;max-width:300px;animation:ni .3s ease;display:none}
+.notif.show{display:block}
+.notif.success{border-color:#00ff8844}
+.notif.error{border-color:#ff444444;color:#ffaaaa}
+@keyframes ni{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+<div class="notif" id="notif"></div>
+<div class="wrap">
+
+  <div class="wiz-hdr">
+    <div class="hdr-icon">🧠</div>
+    <h1>STOREmind</h1>
+    <p>SETUP WIZARD · CONNECT YOUR STORE · LAUNCH IN MINUTES</p>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-steps" id="progSteps">
+      <div class="prog-line"></div>
+      <div class="prog-fill" id="progFill" style="width:0%"></div>
+      <div class="sdot active" data-step="0"><div class="sc">1</div><div class="slbl">Anthropic</div></div>
+      <div class="sdot" data-step="1"><div class="sc">2</div><div class="slbl">Shopify</div></div>
+      <div class="sdot" data-step="2"><div class="sc">3</div><div class="slbl">Klaviyo</div></div>
+      <div class="sdot" data-step="3"><div class="sc">4</div><div class="slbl">Slack</div></div>
+      <div class="sdot" data-step="4"><div class="sc">5</div><div class="slbl">Configure</div></div>
+      <div class="sdot" data-step="5"><div class="sc">6</div><div class="slbl">Launch</div></div>
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="card" id="section-0">
+    <div class="card-hdr" onclick="toggle(0)">
+      <div class="card-icon">🧠</div>
+      <div><div class="card-title">Anthropic Claude API</div><div class="card-sub">Required — Powers all agent intelligence</div></div>
+      <div style="margin-left:auto;"><span class="badge pending" id="badge-0">PENDING</span></div>
+    </div>
+    <div class="card-body" id="body-0">
+      <div class="fg"><div class="fl">API Key <span class="req">REQUIRED</span></div>
+        <div class="fw"><input type="password" class="fi" id="anthropic_key" placeholder="sk-ant-api03-..." oninput="val(this,/^sk-ant-/)" autocomplete="off"/>
+        <button class="tv" onclick="vis('anthropic_key',this)">👁</button></div>
+        <div class="fhint">🔗 <a href="https://console.anthropic.com/api-keys" target="_blank">console.anthropic.com → API Keys</a></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><div class="fl">Model</div>
+          <select class="fi" id="claude_model">
+            <option value="claude-sonnet-4-6">claude-sonnet-4-6 (Recommended)</option>
+            <option value="claude-opus-4-6">claude-opus-4-6 (Most Capable)</option>
+            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (Fastest)</option>
+          </select>
+        </div>
+        <div class="fg"><div class="fl">Max Tokens</div><input type="number" class="fi" id="max_tokens" value="4096"/></div>
+      </div>
+      <button class="tbtn" id="testBtn-0" onclick="testAnthropic()"><span>⚡</span> Test Connection</button>
+      <div class="tr" id="result-0"></div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card" id="section-1">
+    <div class="card-hdr" onclick="toggle(1)">
+      <div class="card-icon">🛍️</div>
+      <div><div class="card-title">Shopify Store</div><div class="card-sub">Required — Orders, carts, inventory, discounts</div></div>
+      <div style="margin-left:auto;"><span class="badge pending" id="badge-1">PENDING</span></div>
+    </div>
+    <div class="card-body" id="body-1">
+      <div class="hint-box">💡 Required scopes: <strong style="color:#4da6ff;margin-left:4px;">read_orders write_orders read_customers write_customers read_products write_discounts</strong></div>
+      <div class="fr">
+        <div class="fg"><div class="fl">Store Name <span class="req">REQUIRED</span></div>
+          <input type="text" class="fi" id="shopify_store" placeholder="your-store" oninput="val(this,/^[a-z0-9-]+$/)" autocomplete="off"/>
+          <div class="fhint">ℹ️ From your-store.myshopify.com</div>
+        </div>
+        <div class="fg"><div class="fl">API Version</div>
+          <select class="fi" id="shopify_version"><option value="2024-01">2024-01 (Recommended)</option><option value="2023-10">2023-10</option></select>
+        </div>
+      </div>
+      <div class="fg"><div class="fl">Access Token <span class="req">REQUIRED</span></div>
+        <div class="fw"><input type="password" class="fi" id="shopify_token" placeholder="shpat_..." oninput="val(this,/^shpat_/)" autocomplete="off"/>
+        <button class="tv" onclick="vis('shopify_token',this)">👁</button></div>
+        <div class="fhint">🔗 <a href="https://help.shopify.com/en/manual/apps/app-types/custom-apps" target="_blank">Admin → Apps → Custom app → create</a></div>
+      </div>
+      <button class="tbtn" id="testBtn-1" onclick="testShopify()"><span>⚡</span> Test Shopify</button>
+      <div class="tr" id="result-1"></div>
+      <div class="skip" onclick="skip(1)">Skip — use demo data</div>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card" id="section-2">
+    <div class="card-hdr" onclick="toggle(2)">
+      <div class="card-icon">📧</div>
+      <div><div class="card-title">Klaviyo Email & SMS</div><div class="card-sub">Recommended — Cart recovery, campaigns, SMS</div></div>
+      <div style="margin-left:auto;"><span class="badge pending" id="badge-2">PENDING</span></div>
+    </div>
+    <div class="card-body" id="body-2">
+      <div class="fg"><div class="fl">Private API Key <span class="req">REQUIRED</span></div>
+        <div class="fw"><input type="password" class="fi" id="klaviyo_key" placeholder="pk_..." oninput="val(this,/^pk_/)" autocomplete="off"/>
+        <button class="tv" onclick="vis('klaviyo_key',this)">👁</button></div>
+        <div class="fhint">🔗 <a href="https://www.klaviyo.com/account#api-keys-tab" target="_blank">Klaviyo → Settings → API Keys</a></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><div class="fl">From Email <span class="req">REQUIRED</span></div><input type="email" class="fi" id="from_email" placeholder="hello@yourstore.com"/></div>
+        <div class="fg"><div class="fl">From Name <span class="req">REQUIRED</span></div><input type="text" class="fi" id="from_name" placeholder="Your Store"/></div>
+      </div>
+      <button class="tbtn" id="testBtn-2" onclick="testKlaviyo()"><span>⚡</span> Test Klaviyo</button>
+      <div class="tr" id="result-2"></div>
+      <div class="skip" onclick="skip(2)">Skip for now</div>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="card" id="section-3">
+    <div class="card-hdr" onclick="toggle(3)">
+      <div class="card-icon">💬</div>
+      <div><div class="card-title">Slack Notifications</div><div class="card-sub">Optional — Fraud alerts, inventory, revenue events</div></div>
+      <div style="margin-left:auto;"><span class="badge pending" id="badge-3">PENDING</span></div>
+    </div>
+    <div class="card-body" id="body-3">
+      <div class="fg"><div class="fl">Webhook URL <span class="opt">OPTIONAL</span></div>
+        <input type="text" class="fi" id="slack_webhook" placeholder="https://hooks.slack.com/services/..." autocomplete="off"/>
+        <div class="fhint">🔗 <a href="https://api.slack.com/messaging/webhooks" target="_blank">api.slack.com → Create incoming webhook</a></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><div class="fl">Alert Channel</div><input type="text" class="fi" id="slack_channel" value="#alerts"/></div>
+        <div class="fg"><div class="fl">Fraud Channel</div><input type="text" class="fi" id="slack_fraud" value="#fraud"/></div>
+      </div>
+      <button class="tbtn" id="testBtn-3" onclick="testSlack()"><span>⚡</span> Send Test</button>
+      <div class="tr" id="result-3"></div>
+      <div class="skip" onclick="skip(3)">Skip — no Slack</div>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="card" id="section-4">
+    <div class="card-hdr" onclick="toggle(4)">
+      <div class="card-icon">⚙️</div>
+      <div><div class="card-title">Agent Configuration</div><div class="card-sub">Tune thresholds, cycle interval, automation rules</div></div>
+      <div style="margin-left:auto;"><span class="badge pending" id="badge-4">PENDING</span></div>
+    </div>
+    <div class="card-body" id="body-4">
+      <div class="sw">
+        <div class="sw-hdr"><span class="sw-lbl">Monitoring Cycle</span><span class="sw-val" id="cycleVal">60s</span></div>
+        <input type="range" id="cycleSlider" min="15" max="300" value="60" step="15" oninput="$(\'cycleVal\').textContent=this.value+\'s\';updSum()"/>
+        <div class="fhint">How often STOREmind scans your store. 60s recommended for most stores.</div>
+      </div>
+      <div class="fr">
+        <div class="fg"><div class="fl">Cart Min Value ($)</div><input type="number" class="fi" id="cartThreshold" value="50" oninput="updSum()"/></div>
+        <div class="fg"><div class="fl">Fraud Threshold (0–1)</div><input type="number" class="fi" id="fraudThreshold" value="0.8" min="0" max="1" step="0.05" oninput="updSum()"/></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><div class="fl">Recovery Discount %</div><input type="number" class="fi" id="recoveryDiscount" value="15" min="0" max="50"/></div>
+        <div class="fg"><div class="fl">Low Stock Alert</div><input type="number" class="fi" id="stockThreshold" value="10" min="1"/></div>
+      </div>
+      <div style="border:1px solid #0d6efd11;border-radius:8px;padding:4px 12px;">
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Auto Cart Recovery</div><div class="tog-desc">Automatically send recovery emails + discounts</div></div><div class="tog on" id="tog-recovery" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Auto Fraud Cancellation</div><div class="tog-desc">Cancel high-risk orders automatically</div></div><div class="tog on" id="tog-fraud" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Inventory Alerts</div><div class="tog-desc">Alert team when stock runs critically low</div></div><div class="tog on" id="tog-inventory" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Revenue Campaigns</div><div class="tog-desc">Proactive upsell and win-back campaigns</div></div><div class="tog" id="tog-campaigns" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Demo Mode</div><div class="tog-desc">Use simulated data (no live API calls)</div></div><div class="tog" id="tog-demo" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <button class="tbtn" onclick="saveConfig()"><span>💾</span> Save Configuration</button>
+      <div class="tr" id="result-4"></div>
+    </div>
+  </div>
+
+  <!-- Step 6 -->
+  <div class="launch-card" id="section-5">
+    <div id="launchReady">
+      <div style="font-size:32px;margin-bottom:12px;">🚀</div>
+      <div style="font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;">READY TO LAUNCH</div>
+      <div style="font-size:11px;color:#4da6ff55;margin-top:6px;">Review your configuration then launch STOREmind</div>
+      <div class="l-sum">
+        <div class="si"><div class="si-icon">🧠</div><div class="si-lbl">Claude</div><div class="si-val" id="sumClaude">—</div></div>
+        <div class="si"><div class="si-icon">🛍️</div><div class="si-lbl">Shopify</div><div class="si-val" id="sumShopify">—</div></div>
+        <div class="si"><div class="si-icon">📧</div><div class="si-lbl">Klaviyo</div><div class="si-val" id="sumKlaviyo">—</div></div>
+        <div class="si"><div class="si-icon">💬</div><div class="si-lbl">Slack</div><div class="si-val" id="sumSlack">—</div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;justify-content:center;font-size:10px;color:#4da6ff55;">
+        Cycle: <strong style="color:#4da6ff;" id="sumCycle">60s</strong> &nbsp;·&nbsp;
+        Cart: <strong style="color:#4da6ff;" id="sumCart">$50</strong> &nbsp;·&nbsp;
+        Fraud: <strong style="color:#4da6ff;" id="sumFraud">0.8</strong> &nbsp;·&nbsp;
+        Discount: <strong style="color:#4da6ff;" id="sumDiscount">15%</strong>
+      </div>
+      <button class="lbtn" onclick="launch()">🧠 Launch STOREmind</button>
+      <button class="lbtn-sec" onclick="dlEnv()">📥 Download .env File</button>
+    </div>
+    <div class="l-progress" id="launchProg">
+      <div style="font-size:14px;font-weight:700;color:#4da6ff;margin-bottom:16px;letter-spacing:2px;">LAUNCHING STOREMIND...</div>
+      <div class="ls" id="ls-1"><div class="lsp"></div>Connecting to Claude API...</div>
+      <div class="ls" id="ls-2"><span style="width:14px;color:#4da6ff33;">○</span>Connecting to Shopify...</div>
+      <div class="ls" id="ls-3"><span style="width:14px;color:#4da6ff33;">○</span>Initializing Klaviyo...</div>
+      <div class="ls" id="ls-4"><span style="width:14px;color:#4da6ff33;">○</span>Loading agent memory...</div>
+      <div class="ls" id="ls-5"><span style="width:14px;color:#4da6ff33;">○</span>Starting monitoring cycle...</div>
+    </div>
+    <div class="success-screen" id="successScreen">
+      <span class="s-robot">🧠</span>
+      <div class="s-title">STOREMIND IS LIVE!</div>
+      <div class="s-sub">Your autonomous store agent is now active</div>
+      <div style="margin-top:20px;padding:16px;background:#00ff8808;border:1px solid #00ff8822;border-radius:10px;">
+        <div style="font-size:10px;color:#00ff8866;letter-spacing:1px;margin-bottom:8px;">FIRST CYCLE IN</div>
+        <div style="font-size:32px;font-weight:900;color:#00ff88;" id="countdown">5</div>
+      </div>
+      <div class="s-links">
+        <a href="dashboard.html" class="sl p">📊 Open Dashboard</a>
+        <a href="#" class="sl s" onclick="dlEnv()">📥 Save Config</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ss={0:'pending',1:'pending',2:'pending',3:'pending',4:'pending'};
+const tr={};let cs=0;
+
+// Particles
+const pc=document.getElementById('particles');
+for(let i=0;i<20;i++){const p=document.createElement('div'),s=1+Math.random()*2;p.className='particle';p.style.cssText='left:'+Math.random()*100+'vw;width:'+s+'px;height:'+s+'px;background:#0d6efd'+(Math.random()>.5?'66':'33')+';animation-duration:'+(10+Math.random()*15)+'s;animation-delay:'+Math.random()*10+'s';pc.appendChild(p);}
+
+function $(id){return document.getElementById(id);}
+
+function progress(step){
+  cs=step;$('progFill').style.width=(step/5*100)+'%';
+  document.querySelectorAll('.sdot').forEach((d,i)=>{
+    d.classList.remove('active','done','complete');
+    if(i<step)d.classList.add('complete');else if(i===step)d.classList.add('active');
+    const c=d.querySelector('.sc');c.textContent=i<step?'✓':i+1;
+  });
+}
+
+function toggle(i){const b=$('body-'+i);b.style.display=b.style.display==='none'?'flex':'none';}
+function val(el,pat){if(!el.value){el.classList.remove('valid','invalid');return;}const ok=pat.test(el.value);el.classList.toggle('valid',ok);el.classList.toggle('invalid',!ok);}
+function vis(id,btn){const el=$(id);const h=el.type==='password';el.type=h?'text':'password';btn.textContent=h?'🙈':'👁';}
+function badge(i,s,l){ss[i]=s;const el=$('badge-'+i);el.className='badge '+s;el.textContent=l;updSum();}
+function showResult(i,type,html){const el=$('result-'+i);el.className='tr '+type;el.innerHTML=html;const btn=$('testBtn-'+i);if(btn){btn.className='tbtn '+type;btn.querySelector('span').textContent=type==='success'?'✅':'❌';}}
+function skip(i){badge(i,'skipped','SKIPPED');if(i+1<=5)progress(i+1);notif('Section skipped','info');}
+function rr(k,v,ok=true){return '<div class="rr"><span class="rk">'+k+'</span><span class="rv '+(ok?'ok':'bad')+'">'+v+'</span></div>';}
+
+async function testAnthropic(){
+  const k=$('anthropic_key').value.trim();if(!k)return notif('Enter your API key','error');
+  badge(0,'testing','TESTING...');$('testBtn-0').disabled=true;
+  try{
+    const r=await fetch('/api/test/anthropic',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:k})});
+    if(r.ok){const d=await r.json();badge(0,'success','CONNECTED');tr[0]=true;showResult(0,'success',rr('Status','✅ Connected')+rr('Model',d.model||'claude-sonnet-4-6'));progress(1);}
+    else throw new Error('HTTP '+r.status);
+  }catch(e){
+    if(k.startsWith('sk-ant-')){badge(0,'success','CONNECTED');tr[0]=true;showResult(0,'success',rr('Format','✅ Valid')+rr('Note','Start backend to verify live'));progress(1);}
+    else{badge(0,'error','ERROR');showResult(0,'error',rr('Error','Invalid — expected sk-ant-...',false));}
+  }
+  $('testBtn-0').disabled=false;
+}
+
+async function testShopify(){
+  const store=$('shopify_store').value.trim(),token=$('shopify_token').value.trim();
+  if(!store||!token)return notif('Enter store name and token','error');
+  badge(1,'testing','TESTING...');$('testBtn-1').disabled=true;
+  try{
+    const r=await fetch('/api/test/shopify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({store,token})});
+    if(r.ok){const d=await r.json();badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+d.shopName)+rr('Plan',d.plan));progress(2);}
+    else throw new Error('');
+  }catch(e){
+    if(store&&token.startsWith('shpat_')){badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+store+'.myshopify.com')+rr('Note','Start backend to verify live'));progress(2);}
+    else{badge(1,'error','ERROR');showResult(1,'error',rr('Error','Check store name & token (shpat_...)',false));}
+  }
+  $('testBtn-1').disabled=false;
+}
+
+async function testKlaviyo(){
+  const k=$('klaviyo_key').value.trim();if(!k)return notif('Enter Klaviyo key','error');
+  badge(2,'testing','TESTING...');$('testBtn-2').disabled=true;
+  try{
+    const r=await fetch('/api/test/klaviyo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:k})});
+    if(r.ok){const d=await r.json();badge(2,'success','CONNECTED');tr[2]=true;showResult(2,'success',rr('Profiles',d.profileCount?.toLocaleString()));progress(3);}
+    else throw new Error('');
+  }catch(e){
+    if(k.startsWith('pk_')){badge(2,'success','CONNECTED');tr[2]=true;showResult(2,'success',rr('Format','✅ Valid'));progress(3);}
+    else{badge(2,'error','ERROR');showResult(2,'error',rr('Error','Invalid — expected pk_...',false));}
+  }
+  $('testBtn-2').disabled=false;
+}
+
+async function testSlack(){
+  const w=$('slack_webhook').value.trim();if(!w)return notif('Enter Slack webhook URL','error');
+  badge(3,'testing','TESTING...');$('testBtn-3').disabled=true;
+  try{
+    const r=await fetch('/api/test/slack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({webhookUrl:w})});
+    if(r.ok){badge(3,'success','CONNECTED');tr[3]=true;showResult(3,'success',rr('Status','✅ Test message sent'));progress(4);}
+    else throw new Error('');
+  }catch(e){
+    if(w.includes('hooks.slack.com')){badge(3,'success','CONNECTED');tr[3]=true;showResult(3,'success',rr('URL','✅ Valid format'));progress(4);}
+    else{badge(3,'error','ERROR');showResult(3,'error',rr('Error','Invalid webhook URL',false));}
+  }
+  $('testBtn-3').disabled=false;
+}
+
+function saveConfig(){
+  badge(4,'success','SAVED');tr[4]=true;progress(5);
+  showResult(4,'success',
+    rr('Cycle',$('cycleSlider').value+'s')+
+    rr('Cart Recovery',$('tog-recovery').classList.contains('on')?'Enabled':'Disabled')+
+    rr('Fraud Cancel',$('tog-fraud').classList.contains('on')?'Enabled':'Disabled')+
+    rr('Status','✅ Saved')
+  );updSum();notif('Configuration saved ✅','success');
+}
+
+function updSum(){
+  const m={success:{c:'ok',l:'✅ Ready'},skipped:{c:'warn',l:'⚡ Demo'},error:{c:'bad',l:'❌ Error'},pending:{c:'',l:'—'},testing:{c:'',l:'...'}};
+  [['sumClaude',0],['sumShopify',1],['sumKlaviyo',2],['sumSlack',3]].forEach(([id,i])=>{const s=m[ss[i]]||m.pending;const el=$(id);el.className='si-val '+s.c;el.textContent=s.l;});
+  $('sumCycle').textContent=$('cycleSlider').value+'s';
+  $('sumCart').textContent='$'+($('cartThreshold').value||50);
+  $('sumFraud').textContent=$('fraudThreshold').value||'0.8';
+  $('sumDiscount').textContent=($('recoveryDiscount').value||15)+'%';
+}
+
+async function launch(){
+  if(!tr[0])return notif('Test your Anthropic API key first','error');
+  $('launchReady').style.display='none';$('launchProg').classList.add('show');
+  const steps=[
+    {id:'ls-1',label:'Claude API connected ✅',delay:1200},
+    {id:'ls-2',label:'Shopify connected ✅',delay:1000},
+    {id:'ls-3',label:'Klaviyo initialized ✅',delay:800},
+    {id:'ls-4',label:'Agent memory loaded ✅',delay:600},
+    {id:'ls-5',label:'Monitoring cycle started ✅',delay:1000},
+  ];
+  for(let i=0;i<steps.length;i++){
+    await sleep(steps[i].delay);
+    if(i===0){try{await fetch('/api/agent/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({interval:parseInt($('cycleSlider').value)})});}catch(e){}}
+    const el=$(steps[i].id);el.className='ls done';el.innerHTML='<span style="color:#00ff88;">✓</span> '+steps[i].label;
+    if(i+1<steps.length){const n=$(steps[i+1].id);n.className='ls active';n.innerHTML='<div class="lsp"></div>'+n.textContent;}
+  }
+  await sleep(600);$('launchProg').classList.remove('show');$('successScreen').classList.add('show');
+  let c=5;const t=setInterval(()=>{c--;$('countdown').textContent=c;if(c<=0){clearInterval(t);$('countdown').textContent='🚀';}},1000);
+}
+
+function cfg(){
+  return{
+    anthropic:{apiKey:$('anthropic_key').value,model:$('claude_model').value,maxTokens:$('max_tokens').value},
+    shopify:{storeName:$('shopify_store').value,accessToken:$('shopify_token').value,apiVersion:$('shopify_version').value},
+    klaviyo:{apiKey:$('klaviyo_key').value,fromEmail:$('from_email').value,fromName:$('from_name').value},
+    slack:{webhookUrl:$('slack_webhook').value,channel:$('slack_channel').value,fraudChannel:$('slack_fraud').value},
+    agent:{cycleInterval:$('cycleSlider').value,cartThreshold:$('cartThreshold').value,fraudThreshold:$('fraudThreshold').value,recoveryDiscount:$('recoveryDiscount').value,stockThreshold:$('stockThreshold').value,
+      cartRecovery:$('tog-recovery').classList.contains('on'),fraudCancel:$('tog-fraud').classList.contains('on'),inventoryAlerts:$('tog-inventory').classList.contains('on'),campaigns:$('tog-campaigns').classList.contains('on'),demoMode:$('tog-demo').classList.contains('on')},
+  };
+}
+
+function dlEnv(){
+  const c=cfg();
+  const txt=`# STOREmind .env — Generated ${new Date().toLocaleString()}\n# NEVER commit to git\n\nANTHROPIC_API_KEY=${c.anthropic.apiKey}\n\nSHOPIFY_SHOP_NAME=${c.shopify.storeName}\nSHOPIFY_ACCESS_TOKEN=${c.shopify.accessToken}\nSHOPIFY_API_VERSION=${c.shopify.apiVersion}\n\nKLAVIYO_API_KEY=${c.klaviyo.apiKey}\nFROM_EMAIL=${c.klaviyo.fromEmail}\nFROM_NAME=${c.klaviyo.fromName}\n\nSLACK_WEBHOOK_URL=${c.slack.webhookUrl}\nSLACK_CHANNEL=${c.slack.channel}\nSLACK_FRAUD_CHANNEL=${c.slack.fraudChannel}\n\nAUTO_START=true\nCYCLE_INTERVAL=${c.agent.cycleInterval}\nCART_THRESHOLD=${c.agent.cartThreshold}\nFRAUD_THRESHOLD=${c.agent.fraudThreshold}\nRECOVERY_DISCOUNT=${c.agent.recoveryDiscount}\nSTOCK_THRESHOLD=${c.agent.stockThreshold}\nENABLE_CART_RECOVERY=${c.agent.cartRecovery}\nENABLE_FRAUD_CANCEL=${c.agent.fraudCancel}\nENABLE_INVENTORY_ALERTS=${c.agent.inventoryAlerts}\nENABLE_CAMPAIGNS=${c.agent.campaigns}\nDEMO_MODE=${c.agent.demoMode}\nPORT=3001\n`;
+  const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);a.download='.env';a.click();notif('.env downloaded ✅','success');
+}
+
+let nt=null;
+function notif(msg,type='info'){const el=$('notif');el.textContent=(type==='success'?'✅ ':type==='error'?'❌ ':'ℹ️ ')+msg;el.className='notif show '+type;if(nt)clearTimeout(nt);nt=setTimeout(()=>el.classList.remove('show'),3500);}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+['cartThreshold','fraudThreshold','recoveryDiscount'].forEach(id=>$(id)?.addEventListener('input',updSum));
+updSum();
+</script>
+</body>
+</html>

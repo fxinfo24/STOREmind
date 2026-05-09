@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>STOREmind — Autonomous Store Intelligence</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#020d1a}::-webkit-scrollbar-thumb{background:#0d6efd44;border-radius:2px}
+.dashboard{display:grid;grid-template-columns:240px 1fr 290px;grid-template-rows:auto 1fr;min-height:100vh;gap:10px;padding:10px}
+.panel{background:linear-gradient(135deg,#041428 0%,#020d1a 100%);border:1px solid #0d6efd33;border-radius:12px;padding:14px;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#0d6efd88,transparent)}
+.panel-title{font-size:10px;font-weight:700;letter-spacing:2px;color:#4da6ff;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.header{grid-column:1/-1;background:linear-gradient(135deg,#041428 0%,#020d1a 100%);border:1px solid #0d6efd33;border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#0d6efd,#00d4ff,transparent)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,#0d6efd,#00d4ff);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px #0d6efd66}
+.logo-text h1{font-size:20px;font-weight:900;letter-spacing:3px;color:#fff}
+.logo-text p{font-size:9px;color:#4da6ff;letter-spacing:2px;margin-top:2px}
+.hdr-c h2{font-size:26px;font-weight:900;letter-spacing:5px;text-align:center;color:#fff;text-shadow:0 0 20px #4da6ff,0 0 40px #0d6efd}
+.hdr-c p{text-align:center;font-size:10px;color:#4da6ff66;letter-spacing:2px;margin-top:2px}
+.ws-badge{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;border:1px solid #0d6efd33;font-size:11px;transition:all .3s}
+.ws-badge.connected{border-color:#00ff8866;color:#00ff88;background:#00ff8811}
+.ws-badge.connecting{border-color:#ffaa0066;color:#ffaa00;background:#ffaa0011}
+.ws-badge.disconnected{border-color:#ff444466;color:#ff4444;background:#ff444411}
+.ws-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.ws-badge.connected .ws-dot{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.demo-badge{padding:3px 8px;background:#ffaa0011;border:1px solid #ffaa0033;border-radius:4px;font-size:9px;color:#ffaa00;margin-left:6px}
+.left-panel{grid-row:2/4;display:flex;flex-direction:column;gap:10px}
+.sdot{width:7px;height:7px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:pulse 2s infinite}
+.gauge-wrap{display:flex;justify-content:center;margin:8px 0}
+.gauge{width:90px;height:90px;position:relative}
+.gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge-bg{fill:none;stroke:#0d6efd22;stroke-width:8}
+.gauge-fill{fill:none;stroke:url(#gg);stroke-width:8;stroke-linecap:round;stroke-dasharray:226;stroke-dashoffset:0;filter:drop-shadow(0 0 6px #0d6efd)}
+.gauge-inner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.gauge-pct{font-size:18px;font-weight:800;color:#fff;text-shadow:0 0 10px #4da6ff;display:block}
+.gauge-lbl{font-size:8px;color:#4da6ff88;letter-spacing:1px}
+.cap-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid #0d6efd11}
+.cap-item:last-child{border-bottom:none}
+.cap-icon{width:26px;height:26px;background:#0d6efd11;border:1px solid #0d6efd33;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.cap-name{font-size:11px;font-weight:700;color:#4da6ff;margin-bottom:2px}
+.cap-desc{font-size:9px;color:#4da6ff55;line-height:1.4}
+.mem-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #0d6efd11}
+.mem-item:last-child{border-bottom:none}
+.mem-lbl{font-size:10px;color:#4da6ff77}
+.mem-val{font-size:11px;font-weight:700;color:#e0f0ff;transition:all .4s}
+.mem-val.flash{color:#00ff88;text-shadow:0 0 8px #00ff88}
+.la-box{background:#0d6efd0d;border-radius:8px;padding:10px;font-size:10px;color:#a0c4ff;line-height:1.6;min-height:50px;transition:opacity .4s}
+.la-time{font-size:9px;color:#4da6ff33;margin-top:5px}
+.center-panel{display:flex;flex-direction:column;gap:10px}
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{background:linear-gradient(135deg,#041428 0%,#020d1a 100%);border:1px solid #0d6efd33;border-radius:10px;padding:12px;position:relative;overflow:hidden;transition:all .4s}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#0d6efd,transparent)}
+.mc.updated{border-color:#00ff8866;box-shadow:0 0 15px #00ff8822}
+.m-icon{font-size:14px;margin-bottom:4px;opacity:.7}
+.m-lbl{font-size:9px;letter-spacing:1px;color:#4da6ff77;text-transform:uppercase;margin-bottom:3px}
+.m-val{font-size:20px;font-weight:800;color:#fff;text-shadow:0 0 10px #4da6ff44;transition:all .4s}
+.m-chg{font-size:9px;color:#00ff88;margin-top:3px}
+.m-vs{font-size:8px;color:#4da6ff33}
+.workflow{flex:1;background:linear-gradient(135deg,#041428 0%,#020d1a 100%);border:1px solid #0d6efd33;border-radius:12px;padding:16px;position:relative;display:flex;align-items:center;justify-content:center;min-height:340px;overflow:hidden}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#0d6efd88,transparent);animation:scan 4s linear infinite;pointer-events:none}
+@keyframes scan{from{top:0;opacity:.8}to{top:100%;opacity:0}}
+.wf-nodes{position:absolute;top:0;left:0;right:0;bottom:0}
+.wf-node{position:absolute;width:185px;background:linear-gradient(135deg,#041e3a 0%,#020d1a 100%);border:1px solid #0d6efd33;border-radius:10px;padding:10px;transition:all .4s}
+.wf-node::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#0d6efd44,transparent)}
+.wf-node.active{border-color:#0d6efd88;box-shadow:0 0 20px #0d6efd33}
+.wf-icon{font-size:18px;margin-bottom:5px}
+.wf-title{font-size:11px;font-weight:700;color:#4da6ff;margin-bottom:3px}
+.wf-desc{font-size:9px;color:#4da6ff55;line-height:1.5;margin-bottom:5px}
+.wf-list{list-style:none}
+.wf-list li{font-size:9px;color:#4da6ff77;padding:1px 0}
+.wf-list li::before{content:"• ";color:#0d6efd}
+.wf-tl{top:16px;left:16px}.wf-tr{top:16px;right:16px}
+.wf-ml{top:50%;left:16px;transform:translateY(-50%)}.wf-mr{top:50%;right:16px;transform:translateY(-50%)}
+.wf-bl{bottom:16px;left:16px}.wf-br{bottom:16px;right:16px}
+.robot-wrap{position:relative;z-index:2}
+.robot{width:110px;height:110px;background:radial-gradient(circle at 40% 40%,#1a4a8a,#041428);border:2px solid #0d6efd55;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 0 30px #0d6efd44,0 0 60px #0d6efd22;animation:rp 3s ease-in-out infinite}
+@keyframes rp{0%,100%{box-shadow:0 0 30px #0d6efd44,0 0 60px #0d6efd22}50%{box-shadow:0 0 50px #0d6efd77,0 0 100px #0d6efd33}}
+.robot.thinking{animation:rt .5s ease-in-out infinite alternate}
+@keyframes rt{from{box-shadow:0 0 40px #0d6efd88}to{box-shadow:0 0 80px #00d4ffcc}}
+.orbit{position:absolute;top:50%;left:50%;border:1px solid #0d6efd22;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.o1{width:180px;height:180px;animation:spin 20s linear infinite}
+.o2{width:280px;height:280px;animation:spin 30s linear infinite reverse}
+@keyframes spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.conn-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.cl{stroke:#0d6efd22;stroke-width:1;fill:none;stroke-dasharray:4 4;animation:dash 3s linear infinite}
+.cl.active{stroke:#0d6efd88;stroke-width:1.5}
+@keyframes dash{from{stroke-dashoffset:0}to{stroke-dashoffset:-16}}
+.rp-panel{background:linear-gradient(135deg,#041428 0%,#020d1a 100%);border:1px solid #0d6efd33;border-radius:12px;padding:14px}
+.rp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rp-title{font-size:10px;font-weight:700;letter-spacing:2px;color:#4da6ff;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.tdot{width:6px;height:6px;border-radius:50%;background:#0d6efd;animation:pulse 1s infinite}
+.rp-text{font-size:10px;color:#a0c4ff88;line-height:1.7;min-height:44px;max-height:60px;overflow:hidden;position:relative}
+.rp-text::after{content:'';position:absolute;bottom:0;left:0;right:0;height:20px;background:linear-gradient(transparent,#020d1a)}
+.waveform{width:100%;height:40px;margin-top:8px}
+.waveform canvas{width:100%;height:100%}
+.rp-meta{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:#4da6ff33}
+.right-panel{grid-row:2/4;display:flex;flex-direction:column;gap:10px}
+.feed-list{max-height:320px;overflow-y:auto}
+.fi{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #0d6efd11;animation:sli .4s ease-out}
+@keyframes sli{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.fi:last-child{border-bottom:none}
+.fi-icon{width:26px;height:26px;background:#0d6efd11;border:1px solid #0d6efd33;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.fi-icon.success{border-color:#00ff8833;background:#00ff8811}
+.fi-icon.error{border-color:#ff444433;background:#ff444411}
+.fi-icon.info{border-color:#0d6efd33;background:#0d6efd11}
+.fi-icon.warning{border-color:#ffaa0033;background:#ffaa0011}
+.fi-body{flex:1;min-width:0}
+.fi-text{font-size:10px;color:#a0c4ff;line-height:1.5}
+.fi-text .hi{color:#00ff88;font-weight:600}
+.fi-text .warn{color:#ffaa00;font-weight:600}
+.fi-text .err{color:#ff4444;font-weight:600}
+.fi-time{font-size:9px;color:#4da6ff33;margin-top:2px}
+.tb{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;background:#0d6efd22;border:1px solid #0d6efd44;border-radius:4px;font-size:9px;color:#4da6ff;margin-top:3px}
+.ts{width:8px;height:8px;border:1px solid #4da6ff44;border-top-color:#4da6ff;border-radius:50%;animation:spin .8s linear infinite}
+.sys-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #0d6efd11}
+.sys-item:last-child{border-bottom:none}
+.sys-l{display:flex;align-items:center;gap:7px}
+.sys-s{display:flex;align-items:center;gap:4px;font-size:9px;color:#00ff88}
+.sys-dot{width:5px;height:5px;border-radius:50%;background:#00ff88;box-shadow:0 0 4px #00ff88;animation:pulse 2s infinite}
+.controls{display:flex;gap:6px}
+.btn{flex:1;padding:8px 10px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1px solid;transition:all .3s;text-transform:uppercase}
+.btn-s{background:#00ff8811;border-color:#00ff8844;color:#00ff88}.btn-s:hover{background:#00ff8822;box-shadow:0 0 10px #00ff8833}
+.btn-x{background:#ff444411;border-color:#ff444433;color:#ff4444}.btn-x:hover{background:#ff444422}
+.btn-r{background:#0d6efd11;border-color:#0d6efd44;color:#4da6ff}.btn-r:hover{background:#0d6efd22}
+.cb-bg{height:4px;background:#0d6efd11;border-radius:2px;overflow:hidden;margin-top:8px}
+.cb-fill{height:100%;background:linear-gradient(90deg,#0d6efd,#00d4ff);border-radius:2px;box-shadow:0 0 6px #0d6efd;transition:width 1s ease}
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;animation:fu linear infinite;opacity:0}
+@keyframes fu{0%{transform:translateY(100vh);opacity:0}10%{opacity:.5}90%{opacity:.2}100%{transform:translateY(-20px);opacity:0}}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+<div class="dashboard">
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">🧠</div>
+    <div class="logo-text"><h1>STOREmind</h1><p>STORE INTELLIGENCE PLATFORM</p></div>
+  </div>
+  <div class="hdr-c">
+    <h2>STOREmind</h2>
+    <p>AUTONOMOUS STORE INTELLIGENCE · POWERED BY CLAUDE SONNET 4.6</p>
+    <p style="margin-top:4px;color:#0d6efd88;font-size:9px;letter-spacing:2px;">→ Think. Decide. Act. Optimize. ←</p>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+    <div class="ws-badge connecting" id="wsBadge"><div class="ws-dot"></div><span id="wsLabel">Connecting...</span><span class="demo-badge" id="demoBadge">DEMO</span></div>
+    <div style="font-size:9px;color:#4da6ff44;text-align:right;">Cycles: <span id="cycleCount" style="color:#4da6ff;">0</span> &nbsp;|&nbsp; Uptime: <span id="uptime" style="color:#4da6ff;">00:00</span></div>
+    <a href="setup.html" style="font-size:9px;color:#4da6ff55;text-decoration:none;border:1px solid #0d6efd22;padding:3px 8px;border-radius:4px;">⚙ Setup</a>
+  </div>
+</header>
+
+<aside class="left-panel">
+  <div class="panel">
+    <div class="panel-title">⬡ Agent Status<span style="margin-left:auto;display:flex;align-items:center;gap:4px;"><div class="sdot"></div><span style="font-size:10px;color:#00ff88;font-weight:600;">ACTIVE</span></span></div>
+    <div class="gauge-wrap"><div class="gauge">
+      <svg viewBox="0 0 90 90"><defs><linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#0d6efd"/><stop offset="100%" style="stop-color:#00d4ff"/></linearGradient></defs>
+      <circle class="gauge-bg" cx="45" cy="45" r="36"/><circle class="gauge-fill" cx="45" cy="45" r="36"/></svg>
+      <div class="gauge-inner"><span class="gauge-pct">100%</span><span class="gauge-lbl">OPERATIONAL</span></div>
+    </div></div>
+    <div style="display:flex;align-items:center;gap:5px;justify-content:center;font-size:10px;color:#4da6ff55;"><div class="sdot" style="width:5px;height:5px;"></div>All systems online</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">◈ Capabilities</div>
+    <div class="cap-item"><div class="cap-icon">🧠</div><div><div class="cap-name">Understand</div><div class="cap-desc">Real-time store data analysis</div></div></div>
+    <div class="cap-item"><div class="cap-icon">⚖️</div><div><div class="cap-name">Decide</div><div class="cap-desc">Highest-impact action selection</div></div></div>
+    <div class="cap-item"><div class="cap-icon">⚡</div><div><div class="cap-name">Act</div><div class="cap-desc">Executes across all platforms</div></div></div>
+    <div class="cap-item"><div class="cap-icon">📚</div><div><div class="cap-name">Learn</div><div class="cap-desc">Improves from every outcome</div></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">◉ Agent Memory</div>
+    <div class="mem-item"><span class="mem-lbl">🏪 Stores Analyzed</span><span class="mem-val" id="memStores">12,542</span></div>
+    <div class="mem-item"><span class="mem-lbl">👥 Interactions</span><span class="mem-val" id="memInteractions">8,721</span></div>
+    <div class="mem-item"><span class="mem-lbl">⚡ Actions Taken</span><span class="mem-val" id="memActions">3,248</span></div>
+    <div class="mem-item"><span class="mem-lbl">✅ Success Rate</span><span class="mem-val" style="color:#00ff88;" id="memSuccess">96.7%</span></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">◎ Last Action</div>
+    <div class="la-box" id="lastAction">Waiting for agent to act...</div>
+    <div class="la-time" id="lastActionTime">—</div>
+  </div>
+</aside>
+
+<main class="center-panel">
+  <div class="metrics-row">
+    <div class="mc" id="card-orders"><div class="m-icon">🛒</div><div class="m-lbl">Orders Processed</div><div class="m-val" id="metOrders">1,248</div><div class="m-chg">↑ 24.5%</div><div class="m-vs">vs yesterday</div></div>
+    <div class="mc" id="card-revenue"><div class="m-icon">💰</div><div class="m-lbl">Revenue Influenced</div><div class="m-val" id="metRevenue">$47,892</div><div class="m-chg">↑ 31.2%</div><div class="m-vs">vs yesterday</div></div>
+    <div class="mc" id="card-carts"><div class="m-icon">🛍️</div><div class="m-lbl">Carts Recovered</div><div class="m-val" id="metCarts">312</div><div class="m-chg">↑ 28.7%</div><div class="m-vs">vs yesterday</div></div>
+    <div class="mc" id="card-time"><div class="m-icon">⏱️</div><div class="m-lbl">Time Saved</div><div class="m-val" id="metTime">128h</div><div class="m-chg">↑ 35.4%</div><div class="m-vs">vs yesterday</div></div>
+  </div>
+
+  <div class="workflow">
+    <div class="scan-line"></div>
+    <svg class="conn-svg" viewBox="0 0 740 360" preserveAspectRatio="none">
+      <line id="cl1" class="cl" x1="370" y1="180" x2="205" y2="70"/><line id="cl2" class="cl" x1="370" y1="180" x2="535" y2="70"/>
+      <line id="cl3" class="cl" x1="370" y1="180" x2="195" y2="180"/><line id="cl4" class="cl" x1="370" y1="180" x2="545" y2="180"/>
+      <line id="cl5" class="cl" x1="370" y1="180" x2="205" y2="295"/><line id="cl6" class="cl" x1="370" y1="180" x2="535" y2="295"/>
+      <circle cx="370" cy="180" r="70" stroke="#0d6efd1a" stroke-width="1" fill="none"/>
+      <circle cx="370" cy="180" r="120" stroke="#0d6efd0d" stroke-width="1" fill="none"/>
+    </svg>
+    <div class="orbit o1"></div><div class="orbit o2"></div>
+    <div class="wf-nodes">
+      <div class="wf-node wf-tl" id="node-monitor"><div class="wf-icon">👁️</div><div class="wf-title">1. MONITOR</div><div class="wf-desc">Watches orders, carts, inventory 24/7</div><ul class="wf-list"><li>Live Orders</li><li>Cart Events</li><li>Stock Levels</li><li>Fraud Signals</li></ul></div>
+      <div class="wf-node wf-tr" id="node-analyze"><div class="wf-icon">🧠</div><div class="wf-title">2. ANALYZE</div><div class="wf-desc">Claude finds patterns and opportunities</div><ul class="wf-list"><li>Customer Intent</li><li>Sales Trends</li><li>Anomaly Detection</li><li>Revenue Forecast</li></ul></div>
+      <div class="wf-node wf-ml" id="node-decide"><div class="wf-icon">⚖️</div><div class="wf-title">3. DECIDE</div><div class="wf-desc">Selects highest-impact action</div><ul class="wf-list"><li>Prioritize</li><li>Segment</li><li>Personalize</li><li>Optimize</li></ul></div>
+      <div class="wf-node wf-mr" id="node-act"><div class="wf-icon">⚡</div><div class="wf-title">4. ACT</div><div class="wf-desc">Executes across Shopify, Klaviyo, Slack</div><ul class="wf-list"><li>Email / SMS</li><li>Discounts</li><li>Fraud Blocks</li><li>Team Alerts</li></ul></div>
+      <div class="wf-node wf-bl" id="node-learn"><div class="wf-icon">📚</div><div class="wf-title">5. LEARN</div><div class="wf-desc">Stores outcomes, refines strategy</div><ul class="wf-list"><li>Track Results</li><li>Identify Wins</li><li>Avoid Repeats</li></ul></div>
+      <div class="wf-node wf-br" id="node-report"><div class="wf-icon">📊</div><div class="wf-title">6. REPORT</div><div class="wf-desc">Surfaces insights to the dashboard</div><ul class="wf-list"><li>Live Metrics</li><li>Action Log</li><li>Recommendations</li></ul></div>
+    </div>
+    <div class="robot-wrap"><div class="robot" id="robot">🧠</div></div>
+  </div>
+
+  <div class="rp-panel">
+    <div class="rp-hdr"><div class="rp-title"><div class="tdot"></div>Agent Thinking...</div><div style="font-size:9px;color:#4da6ff44;" id="dataPoints">Idle — press Start to begin</div></div>
+    <div class="rp-text" id="reasoningText">Waiting for cycle to begin...</div>
+    <div class="waveform"><canvas id="waveCanvas"></canvas></div>
+    <div class="rp-meta"><span id="thinkStatus">Idle</span><span>Confidence: <span style="color:#00ff88;" id="confidence">96.7%</span></span></div>
+  </div>
+</main>
+
+<aside class="right-panel">
+  <div class="panel">
+    <div class="panel-title">◎ Controls</div>
+    <div class="controls">
+      <button class="btn btn-s" onclick="sendCmd('start_agent')">▶ Start</button>
+      <button class="btn btn-x" onclick="sendCmd('stop_agent')">■ Stop</button>
+      <button class="btn btn-r" onclick="sendCmd('run_cycle')">↻ Cycle</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:#4da6ff44;margin-top:8px;margin-bottom:4px;"><span>Agent Health</span><span>100%</span></div>
+    <div class="cb-bg"><div class="cb-fill" style="width:100%;"></div></div>
+  </div>
+  <div class="panel" style="flex:1;display:flex;flex-direction:column;">
+    <div class="panel-title">◈ Live Feed <span style="margin-left:auto;font-size:9px;color:#4da6ff44;" id="feedCount">0 events</span></div>
+    <div class="feed-list" id="feedList"><div class="fi"><div class="fi-icon info">💤</div><div class="fi-body"><div class="fi-text">Waiting for agent events...</div><div class="fi-time">—</div></div></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">◉ Systems</div>
+    <div class="sys-item"><div class="sys-l"><span>🟢</span><span style="font-size:11px;color:#e0f0ff;">Shopify</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
+    <div class="sys-item"><div class="sys-l"><span>📧</span><span style="font-size:11px;color:#e0f0ff;">Klaviyo</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
+    <div class="sys-item"><div class="sys-l"><span>🧠</span><span style="font-size:11px;color:#e0f0ff;">Claude 4.6</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
+    <div class="sys-item"><div class="sys-l"><span>💳</span><span style="font-size:11px;color:#e0f0ff;">Stripe</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
+    <div class="sys-item"><div class="sys-l"><span>💬</span><span style="font-size:11px;color:#e0f0ff;">Slack</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
+    <div class="sys-item"><div class="sys-l"><span>📊</span><span style="font-size:11px;color:#e0f0ff;">Analytics</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
+  </div>
+</aside>
+</div>
+
+<script>
+const WS='ws://localhost:3001';
+let ws=null,isDemo=false,cycles=0,feeds=0,startT=Date.now(),activeN=null,waveI=.3;
+const S={orders:1248,revenue:47892,carts:312,timeSaved:128,stores:12542,interactions:8721,actions:3248,rate:96.7};
+
+function connectWS(){
+  badge('connecting','Connecting...');
+  try{
+    ws=new WebSocket(WS); let ok=false;
+    ws.onopen=()=>{ok=true;isDemo=false;badge('connected','Live · Connected');document.getElementById('demoBadge').style.display='none';feed('success','🔌','Connected to STOREmind backend','now');};
+    ws.onmessage=e=>{try{on(JSON.parse(e.data));}catch(x){}};
+    ws.onclose=()=>{if(ok){badge('disconnected','Disconnected');setTimeout(connectWS,3000);}else demo();};
+    ws.onerror=()=>{if(!ok)demo();};
+    setTimeout(()=>{if(ws.readyState!==1)demo();},2000);
+  }catch(e){demo();}
+}
+
+function sendCmd(cmd,p={}){
+  if(ws&&ws.readyState===1){ws.send(JSON.stringify({command:cmd,...p}));feed('info','📡','Command: '+cmd,'now');}
+  else{feed('warning','⚡','Demo: '+cmd,'simulated');if(cmd==='run_cycle')demoCycle();}
+}
+
+function badge(s,l){document.getElementById('wsBadge').className='ws-badge '+s;document.getElementById('wsLabel').textContent=l;}
+
+function on(d){
+  if(d.type==='init'&&d.state)sync(d.state);
+  else if(d.type==='agent_started'){feed('success','▶','Agent started',ago(d.timestamp));thinking(true);node('monitor');}
+  else if(d.type==='agent_stopped'){feed('warning','■','Agent stopped',ago(d.timestamp));thinking(false);clrNode();}
+  else if(d.type==='agent_thinking'){document.getElementById('reasoningText').textContent=d.message;document.getElementById('thinkStatus').textContent=d.message;thinking(true);node('monitor');}
+  else if(d.type==='agent_reasoning'){document.getElementById('reasoningText').textContent=d.text.slice(0,300);document.getElementById('dataPoints').textContent='Analyzing '+(2000+Math.floor(Math.random()*2000)).toLocaleString()+' data points';node('analyze');}
+  else if(d.type==='tool_executing'){node(t2n(d.tool));feed('info','⚙️','Executing: <span class="warn">'+d.tool+'</span>',ago(d.timestamp),'<div class="tb"><div class="ts"></div>'+d.tool+'</div>');}
+  else if(d.type==='tool_result')toolResult(d);
+  else if(d.type==='cycle_complete'){cycles++;document.getElementById('cycleCount').textContent=cycles;thinking(false);node('report');setTimeout(clrNode,2000);if(d.state)sync(d.state);feed('success','✅','Cycle #'+cycles+' complete',ago(d.timestamp));}
+  else if(d.type==='agent_error'){feed('error','⚠️','Error: <span class="err">'+d.error+'</span>',ago(d.timestamp));thinking(false);}
+}
+
+function toolResult(d){
+  const{tool,result,action}=d; if(!result.success){feed('error','❌','Tool failed: '+tool,ago(d.timestamp));return;} node('act');const t=ago(d.timestamp);
+  if(tool==='get_abandoned_carts')feed('info','🛒','Found <span class="hi">'+(result.carts?.length??0)+' carts</span> · $'+result.total_value_at_risk+' at risk',t);
+  else if(tool==='get_recent_orders'){const hr=(result.orders||[]).filter(o=>o.risk_level==='high');feed(hr.length?'warning':'success',hr.length?'⚠️':'✅',hr.length?'Found <span class="warn">'+hr.length+' high-risk orders</span>':(result.orders?.length)+' orders — all clear',t);S.orders+=(result.orders?.length??0);updM('orders',S.orders,'card-orders');}
+  else if(tool==='get_inventory_levels')feed('warning','📦','Low stock: <span class="warn">'+(result.low_stock?.length)+' products</span> · '+(result.out_of_stock?.length)+' OOS',t);
+  else if(tool==='apply_discount'){feed('success','🏷️','Applied <span class="hi">'+result.discount_percent+'% off</span> · '+result.discount_code,t);S.revenue+=Math.floor(50+Math.random()*300);updM('revenue',S.revenue,'card-revenue',true);}
+  else if(tool==='cancel_order')feed('error','🛡️','Cancelled <span class="err">'+result.order_id+'</span> · Fraud blocked',t);
+  else if(tool==='send_cart_recovery_email'){feed('success','✉️','Recovery → <span class="hi">'+result.sent_to+'</span>',t);S.carts++;updM('carts',S.carts,'card-carts');}
+  else if(tool==='send_bulk_campaign')feed('success','📣','Campaign → <span class="hi">'+(result.recipients?.toLocaleString())+' customers</span>',t);
+  else if(tool==='send_sms')feed('success','📱','SMS delivered',t);
+  else if(tool==='notify_team')feed('info','💬','Notified <span class="hi">'+result.channel+'</span>',t);
+  if(action?.description)lastAction(action.description);
+  S.actions++;memCounters();setTimeout(()=>node('learn'),800);
+}
+
+function feed(type,icon,text,time='now',extra=''){
+  feeds++;document.getElementById('feedCount').textContent=feeds+' events';
+  const list=document.getElementById('feedList');
+  const ph=list.querySelector('.fi');if(ph&&ph.querySelector('.fi-text')?.textContent==='Waiting for agent events...')ph.remove();
+  const el=document.createElement('div');el.className='fi';
+  el.innerHTML='<div class="fi-icon '+type+'">'+icon+'</div><div class="fi-body"><div class="fi-text">'+text+'</div>'+extra+'<div class="fi-time">'+time+'</div></div>';
+  list.insertBefore(el,list.firstChild);while(list.children.length>30)list.removeChild(list.lastChild);
+}
+
+function updM(key,val,cardId,dollar=false){
+  const m={orders:'metOrders',revenue:'metRevenue',carts:'metCarts',timeSaved:'metTime'};
+  const el=document.getElementById(m[key]);if(!el)return;
+  el.textContent=dollar?'$'+val.toLocaleString():val.toLocaleString();
+  const c=document.getElementById(cardId);if(c){c.classList.add('updated');setTimeout(()=>c.classList.remove('updated'),1500);}
+}
+
+function lastAction(text){const el=document.getElementById('lastAction');el.style.opacity='0';setTimeout(()=>{el.textContent=text;el.style.opacity='1';document.getElementById('lastActionTime').textContent='just now';},300);}
+function node(name){if(activeN)document.getElementById('node-'+activeN)?.classList.remove('active');activeN=name;document.getElementById('node-'+name)?.classList.add('active');['cl1','cl2','cl3','cl4','cl5','cl6'].forEach(id=>document.getElementById(id)?.classList.remove('active'));const m={monitor:'cl1',analyze:'cl2',decide:'cl3',act:'cl4',learn:'cl5',report:'cl6'};if(m[name])document.getElementById(m[name])?.classList.add('active');}
+function clrNode(){if(activeN){document.getElementById('node-'+activeN)?.classList.remove('active');activeN=null;}}
+function thinking(v){document.getElementById('robot').classList.toggle('thinking',v);}
+function t2n(t){return t.startsWith('get_')?'monitor':'act';}
+function ago(ts){if(!ts)return 'now';const s=Math.floor((Date.now()-ts)/1000);if(s<5)return 'now';if(s<60)return s+'s ago';return Math.floor(s/60)+'m ago';}
+
+function sync(s){
+  if(s.metrics){S.orders=s.metrics.ordersProcessed||S.orders;S.revenue=s.metrics.revenueInfluenced||S.revenue;S.carts=s.metrics.cartsRecovered||S.carts;updM('orders',S.orders,'card-orders');updM('revenue',S.revenue,'card-revenue',true);updM('carts',S.carts,'card-carts');}
+  S.actions=s.actionsTaken||S.actions;S.interactions=s.customerInteractions||S.interactions;S.rate=s.successRate||S.rate;memCounters();
+  if(s.recentActions?.[0]?.description)lastAction(s.recentActions[0].description);
+}
+
+function memCounters(){flash('memStores',S.stores.toLocaleString());flash('memInteractions',S.interactions.toLocaleString());flash('memActions',S.actions.toLocaleString());flash('memSuccess',S.rate+'%');}
+function flash(id,val){const el=document.getElementById(id);if(!el)return;el.textContent=val;el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),600);}
+
+// DEMO
+function demo(){if(isDemo)return;isDemo=true;badge('connecting','Demo Mode');feed('warning','⚡','Backend not found — <span class="warn">demo mode</span>','now');demoCycle();setInterval(demoCycle,22000);}
+
+const DEMO=[
+  {type:'agent_thinking',message:'Starting monitoring cycle...'},
+  {type:'agent_reasoning',text:"Checking abandoned carts first (highest revenue impact), then fraud, then inventory."},
+  {type:'tool_executing',tool:'get_abandoned_carts'},
+  {type:'tool_result',tool:'get_abandoned_carts',result:{success:true,carts:[{},{},{}],total_value_at_risk:525.50},action:{description:'Scanned carts — 3 found ($525 at risk)'}},
+  {type:'agent_reasoning',text:"Mike Chen: $342 cart, VIP ($2100 LTV), 61% purchase probability. Applying 15% discount + recovery email."},
+  {type:'tool_executing',tool:'apply_discount'},
+  {type:'tool_result',tool:'apply_discount',result:{success:true,discount_percent:15,discount_code:'SAVE15-XK9P2'},action:{description:'Applied 15% discount — targeting $342 recovery'}},
+  {type:'tool_executing',tool:'send_cart_recovery_email'},
+  {type:'tool_result',tool:'send_cart_recovery_email',result:{success:true,sent_to:'mike@example.com'},action:{description:'Recovery email → mike@example.com with SAVE15 code'}},
+  {type:'tool_executing',tool:'get_recent_orders'},
+  {type:'tool_result',tool:'get_recent_orders',result:{success:true,orders:[{risk_level:'high',risk_score:.89},{risk_level:'low'},{risk_level:'low'}]},action:{description:'Checked 3 orders — 1 high-risk (score 0.89)'}},
+  {type:'agent_reasoning',text:"Order #1052: risk 0.89. VPN detected, new account, mismatched billing. Cancelling + alerting #fraud."},
+  {type:'tool_executing',tool:'cancel_order'},
+  {type:'tool_result',tool:'cancel_order',result:{success:true,order_id:'order_1052'},action:{description:'Cancelled fraud order #1052 — $289 protected'}},
+  {type:'tool_executing',tool:'notify_team'},
+  {type:'tool_result',tool:'notify_team',result:{success:true,channel:'#fraud'},action:{description:'#fraud channel alerted'}},
+  {type:'tool_executing',tool:'get_inventory_levels'},
+  {type:'tool_result',tool:'get_inventory_levels',result:{success:true,low_stock:[{},{},{}],out_of_stock:[{}]},action:{description:'3 products low stock, 1 OOS'}},
+  {type:'cycle_complete'},
+];
+
+async function demoCycle(){thinking(true);node('monitor');for(const ev of DEMO){await sleep(600+Math.random()*1200);on({...ev,timestamp:Date.now()});}thinking(false);}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// Waveform
+const canvas=document.getElementById('waveCanvas'),ctx=canvas.getContext('2d');let wo=0;
+function resize(){canvas.width=canvas.offsetWidth*devicePixelRatio;canvas.height=canvas.offsetHeight*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);}
+resize();window.addEventListener('resize',resize);
+function wave(){
+  const w=canvas.offsetWidth,h=canvas.offsetHeight,cy=h/2;ctx.clearRect(0,0,w,h);
+  const g=ctx.createLinearGradient(0,0,w,0);g.addColorStop(0,'transparent');g.addColorStop(.1,'#0d6efd88');g.addColorStop(.5,'#00d4ffaa');g.addColorStop(.9,'#0d6efd88');g.addColorStop(1,'transparent');
+  ctx.beginPath();ctx.strokeStyle=g;ctx.lineWidth=1.5;ctx.shadowBlur=6;ctx.shadowColor='#0d6efd';
+  for(let x=0;x<w;x++){const i=waveI,y=cy+Math.sin((x*.03)+wo)*10*i+Math.sin((x*.07)+wo*1.5)*5*i+Math.sin((x*.015)+wo*.8)*7*i+Math.sin((x*.15)+wo*2)*2;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();wo+=.04;requestAnimationFrame(wave);
+}
+wave();
+setInterval(()=>{waveI=document.getElementById('robot').classList.contains('thinking')?Math.min(1,waveI+.05):Math.max(.2,waveI-.02);},100);
+
+// Particles
+const pc=document.getElementById('particles');
+for(let i=0;i<25;i++){const p=document.createElement('div'),s=1+Math.random()*2;p.className='particle';p.style.cssText='left:'+Math.random()*100+'vw;width:'+s+'px;height:'+s+'px;background:#0d6efd'+(Math.random()>.5?'88':'44')+';animation-duration:'+(10+Math.random()*15)+'s;animation-delay:'+Math.random()*10+'s';pc.appendChild(p);}
+
+// Uptime
+setInterval(()=>{const s=Math.floor((Date.now()-startT)/1000);document.getElementById('uptime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},1000);
+
+connectWS();
+</script>
+</body>
+</html>
