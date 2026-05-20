@@ -27,6 +27,7 @@ export class STOREmindAgent {
       cyclesRun: 0,
     };
 
+    this._consecutiveErrors = 0;
     this.config = {
       cycleInterval:    parseInt(process.env.CYCLE_INTERVAL    || '60'),
       cartThreshold:  parseFloat(process.env.CART_THRESHOLD    || '50'),
@@ -123,6 +124,7 @@ BEHAVIOUR: Explain reasoning before each action. Chain tools when logical. Prior
         if (resp.stop_reason === 'end_turn') {
           go = false;
           this.cycleCount++;
+          this._consecutiveErrors = 0;
           this.broadcast({ type: 'cycle_complete', state: this.memory.getState(), cycleCount: this.cycleCount, timestamp: Date.now() });
           this.conversationHistory = [];
           // Pillar 1: notify server on first real cycle
@@ -132,7 +134,17 @@ BEHAVIOUR: Explain reasoning before each action. Chain tools when logical. Prior
         }
       } catch (err) {
         console.error('[STOREmind agent error]', err.message);
+        this._consecutiveErrors = (this._consecutiveErrors || 0) + 1;
         this.broadcast({ type: 'agent_error', error: err.message, timestamp: Date.now() });
+        // Automation: self-heal after transient errors (rate limits, network blips)
+        if (this._consecutiveErrors <= 3) {
+          const backoff = this._consecutiveErrors * 15_000; // 15s, 30s, 45s
+          console.log(`[STOREmind] Auto-recovering in ${backoff/1000}s (attempt ${this._consecutiveErrors}/3)`);
+          setTimeout(() => this.runCycle(), backoff);
+        } else {
+          console.error('[STOREmind] 3 consecutive failures — stopping. Check ANTHROPIC_API_KEY and network.');
+          this.stop();
+        }
         go = false;
       }
     }

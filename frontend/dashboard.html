@@ -196,8 +196,8 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
     <div class="ws-badge connecting" id="wsBadge"><div class="ws-dot"></div><span id="wsLabel">Connecting...</span><span class="demo-badge" id="demoBadge">DEMO</span></div>
     <div style="font-size:9px;color:#4da6ff44;text-align:right;">Cycles: <span id="cycleCount" style="color:#4da6ff;">0</span> &nbsp;|&nbsp; Uptime: <span id="uptime" style="color:#4da6ff;">00:00</span></div>
     
-            <div class="guarantee-badge">🛡️ ROI Guaranteed or Month Free</div>
-            <a href="setup.html" style="font-size:9px;color:#4da6ff55;text-decoration:none;border:1px solid #0d6efd22;padding:3px 8px;border-radius:4px;">⚙ Setup</a>
+            <div class="guarantee-badge">🛡️ Pays for itself in 30 days — guaranteed</div>
+            <a href="setup.html" style="font-size:9px;color:#4da6ff55;text-decoration:none;border:1px solid #0d6efd22;padding:3px 8px;border-radius:4px;">⚙ Connect More Systems</a>
   </div>
 </header>
 
@@ -215,7 +215,7 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
     <div class="panel-title">💰 Revenue Protected</div>
     <div class="rp-panel">
       <div class="rp-total-wrap">
-        <div class="rp-total-label">LIFETIME VALUE PROTECTED</div>
+        <div class="rp-total-label">REVENUE STOREMIND HAS PROTECTED</div>
         <div class="rp-total-value" id="rp-total">$0</div>
       </div>
       <div class="rp-breakdown">
@@ -224,21 +224,21 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
         <div class="rp-item"><div class="rp-item-val" id="rp-time">0h</div><div class="rp-item-lbl">SAVED</div></div>
       </div>
       <div class="guarantee-row">
-        <span class="guarantee-lbl">Guarantee status</span>
+        <span class="guarantee-lbl">Guarantee progress</span>
         <span id="guarantee-status" style="font-size:9px;color:#ffaa00;">$299 to break even</span>
       </div>
     </div>
   </div>
   <div class="panel">
-    <div class="panel-title">◉ Agent Memory</div>
-    <div class="mem-item"><span class="mem-lbl">🏪 Stores Analyzed</span><span class="mem-val" id="memStores">12,542</span></div>
+    <div class="panel-title">◉ What STOREmind Has Learned</div>
+    <div class="mem-item"><span class="mem-lbl">🏪 Store Patterns Learned</span><span class="mem-val" id="memStores">12,542</span></div>
     <div class="mem-item"><span class="mem-lbl">👥 Interactions</span><span class="mem-val" id="memInteractions">8,721</span></div>
     <div class="mem-item"><span class="mem-lbl">⚡ Actions Taken</span><span class="mem-val" id="memActions">3,248</span></div>
     <div class="mem-item"><span class="mem-lbl">✅ Success Rate</span><span class="mem-val" style="color:#00ff88;" id="memSuccess">96.7%</span></div>
   </div>
   <div class="panel">
-    <div class="panel-title">◎ Last Action</div>
-    <div class="la-box" id="lastAction">Waiting for agent to act...</div>
+    <div class="panel-title">◎ Last Revenue Action Taken</div>
+    <div class="la-box" id="lastAction">Agent will act on your first finding — results appear here</div>
     <div class="la-time" id="lastActionTime">—</div>
   </div>
 </aside>
@@ -273,27 +273,27 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
   </div>
 
   <div class="rp-panel">
-    <div class="rp-hdr"><div class="rp-title"><div class="tdot"></div>Agent Thinking...</div><div style="font-size:9px;color:#4da6ff44;" id="dataPoints">Idle — press Start to begin</div></div>
-    <div class="rp-text" id="reasoningText">Waiting for cycle to begin...</div>
+    <div class="rp-hdr"><div class="rp-title"><div class="tdot"></div>Agent Thinking...</div><div style="font-size:9px;color:#4da6ff44;" id="dataPoints">Click "Start Recovering Revenue" to activate</div></div>
+    <div class="rp-text" id="reasoningText">STOREmind will explain every decision it makes here</div>
     <div class="waveform"><canvas id="waveCanvas"></canvas></div>
-    <div class="rp-meta"><span id="thinkStatus">Idle</span><span>Confidence: <span style="color:#00ff88;" id="confidence">96.7%</span></span></div>
+    <div class="rp-meta"><span id="thinkStatus">Ready</span><span>Confidence: <span style="color:#00ff88;" id="confidence">96.7%</span></span></div>
   </div>
 </main>
 
 <aside class="right-panel">
   <div class="panel">
-    <div class="panel-title">◎ Controls</div>
+    <div class="panel-title">◎ Agent Controls</div>
     <div class="controls">
-      <button class="btn btn-s" onclick="sendCmd('start_agent')">▶ Start</button>
-      <button class="btn btn-x" onclick="sendCmd('stop_agent')">■ Stop</button>
-      <button class="btn btn-r" onclick="sendCmd('run_cycle')">↻ Cycle</button>
+      <button class="btn btn-s" onclick="sendCmd('start_agent')">▶ Start Recovering Revenue</button>
+      <button class="btn btn-x" onclick="sendCmd('stop_agent')">⏸ Pause Automation</button>
+      <button class="btn btn-r" onclick="sendCmd('run_cycle')">↻ Scan Store Now</button>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:9px;color:#4da6ff44;margin-top:8px;margin-bottom:4px;"><span>Agent Health</span><span>100%</span></div>
     <div class="cb-bg"><div class="cb-fill" style="width:100%;"></div></div>
   </div>
   <div class="panel" style="flex:1;display:flex;flex-direction:column;">
-    <div class="panel-title">◈ Live Feed <span style="margin-left:auto;font-size:9px;color:#4da6ff44;" id="feedCount">0 events</span></div>
-    <div class="feed-list" id="feedList"><div class="fi"><div class="fi-icon info">💤</div><div class="fi-body"><div class="fi-text">Waiting for agent events...</div><div class="fi-time">—</div></div></div></div>
+    <div class="panel-title">◈ What STOREmind Is Doing <span style="margin-left:auto;font-size:9px;color:#4da6ff44;" id="feedCount">0 events</span></div>
+    <div class="feed-list" id="feedList"><div class="fi"><div class="fi-icon info">💤</div><div class="fi-body"><div class="fi-text">Agent scanning your store — first results appear below</div><div class="fi-time">—</div></div></div></div>
   </div>
   <div class="panel">
     <div class="panel-title">◈ Integration Depth</div>
@@ -309,7 +309,7 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
         <div class="idot inactive" id="depth-dot-3" title="Slack">💬</div>
         <div class="idot inactive" id="depth-dot-4" title="Stripe">💳</div>
       </div>
-      <div class="depth-nudge" id="depth-nudge">💡 Connect Slack to unlock fraud alerts</div>
+      <div class="depth-nudge" id="depth-nudge">💡 Connect Slack → get fraud blocked automatically</div>
     </div>
   </div>
 
@@ -351,14 +351,24 @@ function badge(s,l){document.getElementById('wsBadge').className='ws-badge '+s;d
 
 function on(d){
   if(d.type==='init'&&d.state){sync(d.state);retentionOnInit(d);}
-  else if(d.type==='agent_started'){retentionOnAgentStart();feed('success','▶','Agent started',ago(d.timestamp));thinking(true);node('monitor');}
-  else if(d.type==='agent_stopped'){retentionOnAgentStop();feed('warning','■','Agent stopped',ago(d.timestamp));thinking(false);clrNode();}
+  else if(d.type==='agent_started'){retentionOnAgentStart();feed('success','▶','Revenue protection activated — first scan running now',ago(d.timestamp));thinking(true);node('monitor');}
+  else if(d.type==='agent_stopped'){retentionOnAgentStop();feed('warning','⏸','Automation paused — revenue protection suspended',ago(d.timestamp));thinking(false);clrNode();}
   else if(d.type==='agent_thinking'){document.getElementById('reasoningText').textContent=d.message;document.getElementById('thinkStatus').textContent=d.message;thinking(true);node('monitor');}
   else if(d.type==='agent_reasoning'){document.getElementById('reasoningText').textContent=d.text.slice(0,300);document.getElementById('dataPoints').textContent='Analyzing '+(2000+Math.floor(Math.random()*2000)).toLocaleString()+' data points';node('analyze');}
   else if(d.type==='tool_executing'){node(t2n(d.tool));feed('info','⚙️','Executing: <span class="warn">'+d.tool+'</span>',ago(d.timestamp),'<div class="tb"><div class="ts"></div>'+d.tool+'</div>');}
   else if(d.type==='tool_result')toolResult(d);
-  else if(d.type==='cycle_complete'){cycles++;document.getElementById('cycleCount').textContent=cycles;thinking(false);node('report');setTimeout(clrNode,2000);if(d.state)sync(d.state);feed('success','✅','Cycle #'+cycles+' complete',ago(d.timestamp));}
-  else if(d.type==='agent_error'){feed('error','⚠️','Error: <span class="err">'+d.error+'</span>',ago(d.timestamp));thinking(false);}
+  else if(d.type==='cycle_complete'){cycles++;document.getElementById('cycleCount').textContent=cycles;thinking(false);node('report');setTimeout(clrNode,2000);if(d.state)sync(d.state);feed('success','✅','Scan #'+cycles+' complete — store protected',ago(d.timestamp));}
+  else if(d.type==='agent_error'){
+    feed('error','⚠️','Error encountered — auto-recovering in 30s',ago(d.timestamp));
+    thinking(false);
+    _errorRestarts++;
+    if(_errorRestarts <= 3){
+      setTimeout(()=>{ feed('info','↻','Auto-restarting agent...','now'); sendCmd('start_agent'); }, 30000);
+    } else {
+      feed('error','⛔','Max retries reached — click "Start Recovering Revenue" to resume manually',ago(d.timestamp));
+      _errorRestarts = 0;
+    }
+  }
 }
 
 function toolResult(d){
@@ -410,7 +420,7 @@ function memCounters(){flash('memStores',S.stores.toLocaleString());flash('memIn
 function flash(id,val){const el=document.getElementById(id);if(!el)return;el.textContent=val;el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),600);}
 
 // DEMO
-function demo(){if(isDemo)return;isDemo=true;badge('connecting','Demo Mode');feed('warning','⚡','Backend not found — <span class="warn">demo mode</span>','now');demoCycle();setInterval(demoCycle,22000);}
+function demo(){if(isDemo)return;isDemo=true;badge("connecting","Autonomous Mode — Demo");badge('connecting','Demo Mode');feed('warning','⚡','Backend not found — <span class="warn">demo mode</span>','now');demoCycle();setInterval(demoCycle,22000);}
 
 const DEMO=[
   {type:'agent_thinking',message:'Starting monitoring cycle...'},
@@ -713,6 +723,7 @@ function retentionOnInit(data) {
 Churn.recordVisit();
 setTimeout(() => Churn.check(), 3000);
 
+let _errorRestarts = 0;
 connectWS();
 </script>
 
@@ -721,8 +732,8 @@ connectWS();
   <div class="po-header">
     <span class="po-icon">⚠️</span>
     <div>
-      <div class="po-title">YOUR STORE WAS UNMONITORED</div>
-      <div class="po-sub">While STOREmind was paused, this is what slipped through</div>
+      <div class="po-title">REVENUE SLIPPED THROUGH WHILE PAUSED</div>
+      <div class="po-sub">Here's what STOREmind would have caught — restart to recover it</div>
     </div>
   </div>
   <div class="po-grid">
@@ -732,7 +743,7 @@ connectWS();
     <div class="po-stat"><div class="po-val" id="phantom-recover">$0</div><div class="po-lbl">RECOVERABLE</div></div>
   </div>
   <div class="po-actions">
-    <button class="po-btn-primary" onclick="sendCmd('start_agent');Churn.dismiss('phantom')">▶ Restart Agent Now</button>
+    <button class="po-btn-primary" onclick="sendCmd('start_agent');Churn.dismiss('phantom')">▶ Resume Protecting Revenue Now</button>
     <button class="po-btn-dismiss" onclick="Churn.dismiss('phantom')">Dismiss</button>
   </div>
 </div>

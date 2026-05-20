@@ -180,7 +180,22 @@ const PORT  = parseInt(process.env.PORT ?? '3001');
 
 httpServer.listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════╗\n║  STOREmind Backend v2.0          ║\n║  HTTP : http://localhost:${PORT}    ║\n║  WS   : ws://localhost:${PORT}     ║\n║  Retention layer: ACTIVE          ║\n╚══════════════════════════════════╝\n`);
-  if (process.env.AUTO_START === 'true') agent.start();
+  // Automation: start automatically if key present and AUTO_START not explicitly false
+  const shouldStart = process.env.AUTO_START !== 'false';
+  if (shouldStart) {
+    console.log('[STOREmind] AUTO_START active — agent launching in 3s');
+    setTimeout(() => agent.start(), 3000); // brief delay for WS clients to connect first
+  } else {
+    console.log('[STOREmind] AUTO_START=false — waiting for manual start via dashboard or API');
+  }
+});
+
+// Automation: catch unhandled errors so process stays alive
+process.on('uncaughtException', (err) => {
+  console.error('[STOREmind] Uncaught exception (process staying alive):', err.message);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[STOREmind] Unhandled rejection (process staying alive):', reason);
 });
 
 process.on('SIGINT', () => {
