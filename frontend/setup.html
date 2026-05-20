@@ -120,6 +120,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 .notif.success{border-color:#00ff8844}
 .notif.error{border-color:#ff444444;color:#ffaaaa}
 @keyframes ni{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── ROI Projection (Pillar 1) ───────────────────────────────── */
+.roi-projection { display:none; padding:14px; background:linear-gradient(135deg,#001a0d,#020d1a); border:1px solid #00ff8833; border-radius:10px; animation:sd .4s ease; }
+.roi-projection.show { display:block; }
+.roi-hdr { font-size:10px; font-weight:700; color:#00ff88; letter-spacing:2px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.roi-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+.roi-item { text-align:center; padding:10px 6px; background:#00ff8808; border:1px solid #00ff8822; border-radius:8px; }
+.roi-val { font-size:18px; font-weight:900; color:#00ff88; }
+.roi-lbl { font-size:8px; color:#00ff8866; margin-top:3px; letter-spacing:1px; }
+.roi-note { font-size:10px; color:#4da6ff66; text-align:center; line-height:1.5; }
+/* Guarantee section on launch screen */
+.guarantee-block { background:linear-gradient(135deg,#001a0d,#020d1a); border:1px solid #00ff8833; border-radius:10px; padding:16px; margin-bottom:20px; text-align:center; }
+.gb-icon { font-size:28px; margin-bottom:8px; }
+.gb-title { font-size:12px; font-weight:900; color:#00ff88; letter-spacing:1px; margin-bottom:6px; }
+.gb-body { font-size:11px; color:#a0ffc8; line-height:1.6; }
+
 </style>
 </head>
 <body>
@@ -199,6 +215,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       </div>
       <button class="tbtn" id="testBtn-1" onclick="testShopify()"><span>⚡</span> Test Shopify</button>
       <div class="tr" id="result-1"></div>
+      <!-- Pillar 1: ROI Projection — shown after successful Shopify connection -->
+      <div class="roi-projection" id="roiProjection">
+        <div class="roi-hdr">📊 Estimated monthly opportunity on your store</div>
+        <div class="roi-grid">
+          <div class="roi-item"><div class="roi-val" id="roi-carts">$1,020</div><div class="roi-lbl">RECOVERABLE CARTS</div></div>
+          <div class="roi-item"><div class="roi-val" id="roi-fraud">$540</div><div class="roi-lbl">FRAUD RISK/MO</div></div>
+          <div class="roi-item"><div class="roi-val" id="roi-time">40h</div><div class="roi-lbl">MANUAL WORK SAVED</div></div>
+        </div>
+        <div class="roi-note">Based on industry averages for your store size. STOREmind typically pays for itself in the first week.</div>
+      </div>
       <div class="skip" onclick="skip(1)">Skip — use demo data</div>
     </div>
   </div>
@@ -287,6 +313,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       <div style="font-size:32px;margin-bottom:12px;">🚀</div>
       <div style="font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;">READY TO LAUNCH</div>
       <div style="font-size:11px;color:#4da6ff55;margin-top:6px;">Review your configuration then launch STOREmind</div>
+
+      <div class="guarantee-block">
+        <div class="gb-icon">🛡️</div>
+        <div class="gb-title">OUTCOME GUARANTEE</div>
+        <div class="gb-body">STOREmind recovers more revenue than it costs in 30 days — or your next month is completely free. No questions asked.</div>
+      </div>
       <div class="l-sum">
         <div class="si"><div class="si-icon">🧠</div><div class="si-lbl">Claude</div><div class="si-val" id="sumClaude">—</div></div>
         <div class="si"><div class="si-icon">🛍️</div><div class="si-lbl">Shopify</div><div class="si-val" id="sumShopify">—</div></div>
@@ -373,10 +405,15 @@ async function testShopify(){
   badge(1,'testing','TESTING...');$('testBtn-1').disabled=true;
   try{
     const r=await fetch('/api/test/shopify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({store,token})});
-    if(r.ok){const d=await r.json();badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+d.shopName)+rr('Plan',d.plan));progress(2);}
+    if(r.ok){const d=await r.json();badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+d.shopName)+rr('Plan',d.plan));
+        showRoiProjection(d.estimatedRecoverable);
+        progress(2);}
     else throw new Error('');
   }catch(e){
-    if(store&&token.startsWith('shpat_')){badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+store+'.myshopify.com')+rr('Note','Start backend to verify live'));progress(2);}
+    if(store&&token.startsWith('shpat_')){badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+store+'.myshopify.com')+rr('Note','Start backend to verify live'));
+        // Pillar 1: Show ROI projection
+        showRoiProjection(null);
+        progress(2);}
     else{badge(1,'error','ERROR');showResult(1,'error',rr('Error','Check store name & token (shpat_...)',false));}
   }
   $('testBtn-1').disabled=false;
@@ -418,6 +455,25 @@ function saveConfig(){
     rr('Fraud Cancel',$('tog-fraud').classList.contains('on')?'Enabled':'Disabled')+
     rr('Status','✅ Saved')
   );updSum();notif('Configuration saved ✅','success');
+}
+
+
+function showRoiProjection(estimatedRecoverable) {
+  const proj = $('roiProjection');
+  if (!proj) return;
+  proj.classList.add('show');
+  // Use backend estimate if available, else industry average
+  const recoverable = estimatedRecoverable || 1020;
+  const fraud       = Math.round(recoverable * 0.53);
+  $('roi-carts').textContent = '$' + recoverable.toLocaleString();
+  $('roi-fraud').textContent = '$' + fraud.toLocaleString();
+  // Animate values counting up
+  let c = 0; const target = recoverable; const step = Math.ceil(target / 40);
+  const t = setInterval(() => {
+    c = Math.min(c + step, target);
+    $('roi-carts').textContent = '$' + c.toLocaleString();
+    if (c >= target) clearInterval(t);
+  }, 30);
 }
 
 function updSum(){

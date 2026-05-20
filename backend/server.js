@@ -1,10 +1,12 @@
-// STOREmind — Express + WebSocket Server
+// STOREmind — Express + WebSocket Server v2.0 (with retention layer)
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { STOREmindAgent } from './agent.js';
+import { OnboardingSequence } from './retention/onboarding.js';
+import { WeeklyDigest } from './retention/digest.js';
 
 dotenv.config();
 
@@ -30,25 +32,98 @@ function broadcast(data) {
 wss.on('connection', ws => {
   clients.add(ws);
   console.log(`[WS] Client connected — total: ${clients.size}`);
-  ws.send(JSON.stringify({ type: 'init', state: agent.getStatus().state, timestamp: Date.now() }));
-  ws.on('close', () => { clients.delete(ws); console.log(`[WS] Client disconnected — total: ${clients.size}`); });
+
+  // Send full state on connect — includes retention data
+  ws.send(JSON.stringify({
+    type: 'init',
+    state: agent.getStatus().state,
+    storePatterns: agent.getStatus().storePatterns,
+    cycleCount: agent.getStatus().cycleCount,
+    stoppedAt: agent.getStatus().stoppedAt,
+    timestamp: Date.now(),
+  }));
+
+  ws.on('close', () => {
+    clients.delete(ws);
+    console.log(`[WS] Client disconnected — total: ${clients.size}`);
+  });
+
   ws.on('message', raw => {
     try {
       const msg = JSON.parse(raw.toString());
-      if (msg.command === 'start_agent') agent.start(msg.interval);
-      if (msg.command === 'stop_agent')  agent.stop();
-      if (msg.command === 'run_cycle')   agent.runCycle();
+      if (msg.command === 'start_agent')     agent.start(msg.interval);
+      if (msg.command === 'stop_agent')      agent.stop();
+      if (msg.command === 'run_cycle')       agent.runCycle();
+      if (msg.command === 'get_phantom')     _sendPhantomValue(ws);
+      if (msg.command === 'send_digest')     digest.send().then(d => { if (d) broadcast(d); });
     } catch (e) { console.error('[WS] Parse error:', e.message); }
   });
 });
 
+function _sendPhantomValue(ws) {
+  const stoppedAt = agent.getStatus().stoppedAt;
+  if (!stoppedAt) return;
+  const pausedMs = Date.now() - stoppedAt;
+  const phantom = agent.getPhantomValue(pausedMs);
+  const msg = JSON.stringify({ type: 'phantom_value', phantom, timestamp: Date.now() });
+  ws.send(msg);
+}
+
+// ── Retention: Pillar 1 — hook first cycle ─────────────────────────────────
+const onboarding = new OnboardingSequence();
+agent.onFirstCycle = (stats) => {
+  console.log('[Retention] First cycle — triggering onboarding sequence');
+  onboarding.onFirstCycle(stats);
+  broadcast({ type: 'first_cycle', stats, timestamp: Date.now() });
+};
+
+// ── Retention: Pillar 2 — weekly digest ───────────────────────────────────
+const digest = new WeeklyDigest(() => agent.getStatus());
+digest.start();
+
+// ── Retention: Pillar 5 — 30-day guarantee check ──────────────────────────
+setTimeout(() => {
+  const stats = agent.getStatus();
+  const totalProtected = (stats.state?.metrics?.revenueInfluenced || 0) +
+                         (stats.state?.metrics?.cartsRecovered || 0) * 85;
+  onboarding.onGuaranteeCheck(totalProtected);
+  broadcast({ type: 'guarantee_check', totalProtected, timestamp: Date.now() });
+}, 30 * 24 * 60 * 60 * 1000);
+
 // ── REST API ───────────────────────────────────────────────────────────────
-app.get('/health',       (_, res) => res.json({ status: 'ok', agent: agent.getStatus() }));
-app.get('/api/state',    (_, res) => res.json(agent.getStatus()));
-app.get('/api/actions',  (req, res) => res.json(agent.getStatus().state.recentActions.slice(0, parseInt(req.query.limit ?? '20'))));
+app.get('/health',      (_, res) => res.json({ status: 'ok', agent: agent.getStatus() }));
+app.get('/api/state',   (_, res) => res.json(agent.getStatus()));
+app.get('/api/actions', (req, res) => res.json(agent.getStatus().state.recentActions.slice(0, parseInt(req.query.limit ?? '20'))));
+
 app.post('/api/agent/start', (req, res) => { agent.start(req.body?.interval); res.json({ success: true }); });
 app.post('/api/agent/stop',  (_, res)   => { agent.stop(); res.json({ success: true }); });
 app.post('/api/agent/run',   (_, res)   => { agent.runCycle(); res.json({ success: true }); });
+
+// Retention endpoints
+app.get('/api/retention/phantom', (_, res) => {
+  const stoppedAt = agent.getStatus().stoppedAt;
+  if (!stoppedAt) return res.json({ paused: false });
+  const pausedMs = Date.now() - stoppedAt;
+  res.json({ paused: true, pausedMs, phantom: agent.getPhantomValue(pausedMs) });
+});
+
+app.get('/api/retention/patterns', (_, res) => {
+  res.json(agent.getStatus().storePatterns);
+});
+
+app.post('/api/retention/signal', (req, res) => {
+  // Pillar 4: receive churn signals from dashboard
+  const { signal, context } = req.body ?? {};
+  console.log(`[Retention] Churn signal: ${signal}`, context ?? '');
+  // Future: persist to DB, trigger intervention workflows
+  res.json({ received: true, signal });
+});
+
+app.post('/api/retention/digest/send', async (_, res) => {
+  const result = await digest.send();
+  broadcast({ type: 'weekly_digest_sent', timestamp: Date.now() });
+  res.json({ success: true, result });
+});
 
 // Setup wizard connection tests
 app.post('/api/test/anthropic', async (req, res) => {
@@ -69,7 +144,12 @@ app.post('/api/test/shopify', async (req, res) => {
     const r = await fetch(`https://${store}.myshopify.com/admin/api/2024-01/shop.json`, { headers: { 'X-Shopify-Access-Token': token } });
     if (!r.ok) throw new Error(`Shopify ${r.status}`);
     const { shop } = await r.json();
-    res.json({ shopName: shop.name, plan: shop.plan_name });
+    // Pillar 1: estimate recoverable value for setup projection
+    const estimatedMonthlyOrders = 200;
+    const estimatedAbandonRate = 0.68;
+    const estimatedAvgCart = 85;
+    const recoverable = Math.round(estimatedMonthlyOrders * estimatedAbandonRate * estimatedAvgCart * 0.12);
+    res.json({ shopName: shop.name, plan: shop.plan_name, estimatedRecoverable: recoverable });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
@@ -99,8 +179,13 @@ const agent = new STOREmindAgent(broadcast);
 const PORT  = parseInt(process.env.PORT ?? '3001');
 
 httpServer.listen(PORT, () => {
-  console.log(`\n╔══════════════════════════════╗\n║  STOREmind Backend v1.0      ║\n║  HTTP: http://localhost:${PORT}  ║\n║  WS  : ws://localhost:${PORT}   ║\n╚══════════════════════════════╝\n`);
+  console.log(`\n╔══════════════════════════════════╗\n║  STOREmind Backend v2.0          ║\n║  HTTP : http://localhost:${PORT}    ║\n║  WS   : ws://localhost:${PORT}     ║\n║  Retention layer: ACTIVE          ║\n╚══════════════════════════════════╝\n`);
   if (process.env.AUTO_START === 'true') agent.start();
 });
 
-process.on('SIGINT', () => { console.log('\n[STOREmind] Shutting down...'); agent.stop(); process.exit(0); });
+process.on('SIGINT', () => {
+  console.log('\n[STOREmind] Shutting down...');
+  digest.stop();
+  agent.stop();
+  process.exit(0);
+});

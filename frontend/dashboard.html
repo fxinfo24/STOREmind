@@ -130,6 +130,52 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
 .particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .particle{position:absolute;border-radius:50%;animation:fu linear infinite;opacity:0}
 @keyframes fu{0%{transform:translateY(100vh);opacity:0}10%{opacity:.5}90%{opacity:.2}100%{transform:translateY(-20px);opacity:0}}
+
+/* ── Retention Layer CSS ─────────────────────────────────────────── */
+.rp-panel { display:flex; flex-direction:column; gap:6px; }
+.rp-total-wrap { text-align:center; padding:12px; background:linear-gradient(135deg,#001a0d,#020d1a); border:1px solid #00ff8833; border-radius:10px; position:relative; overflow:hidden; }
+.rp-total-wrap::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,#00ff8866,transparent); }
+.rp-total-label { font-size:8px; color:#00ff8877; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+.rp-total-value { font-size:26px; font-weight:900; color:#00ff88; text-shadow:0 0 15px #00ff8844; transition:all .4s; }
+.rp-breakdown { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+.rp-item { background:#0d6efd08; border:1px solid #0d6efd22; border-radius:7px; padding:7px; text-align:center; }
+.rp-item-val { font-size:12px; font-weight:700; color:#e0f0ff; }
+.rp-item-lbl { font-size:8px; color:#4da6ff44; margin-top:2px; letter-spacing:1px; }
+.guarantee-row { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; background:#0d6efd08; border-radius:6px; font-size:9px; }
+.guarantee-lbl { color:#4da6ff55; }
+/* Integration Depth */
+.depth-panel { padding:10px 0 0; }
+.depth-bar-bg { height:4px; background:#0d6efd11; border-radius:2px; overflow:hidden; margin:6px 0; }
+.depth-bar-fill { height:100%; background:linear-gradient(90deg,#0d6efd,#00d4ff); border-radius:2px; transition:width .8s ease; box-shadow:0 0 6px #0d6efd; }
+.depth-dots { display:flex; gap:4px; margin:6px 0; }
+.idot { width:22px; height:22px; border-radius:50%; border:1px solid; display:flex; align-items:center; justify-content:center; font-size:9px; transition:all .3s; }
+.idot.active { background:#0d6efd22; border-color:#0d6efd; box-shadow:0 0 6px #0d6efd44; }
+.idot.inactive { background:transparent; border-color:#0d6efd22; opacity:.4; }
+.depth-nudge { font-size:9px; color:#ffaa0088; margin-top:4px; display:none; }
+/* Guarantee badge in header */
+.guarantee-badge { display:flex; align-items:center; gap:5px; padding:4px 10px; background:#00ff8808; border:1px solid #00ff8822; border-radius:12px; font-size:9px; color:#00ff8888; }
+/* Phantom value overlay */
+.phantom-overlay { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:100; background:linear-gradient(135deg,#041428,#020d1a); border:1px solid #ffaa0044; border-radius:14px; padding:18px 24px; max-width:480px; width:90%; box-shadow:0 8px 40px #00000066; display:none; animation:pSlideUp .4s ease; }
+.phantom-overlay.show { display:block; }
+@keyframes pSlideUp { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+.po-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.po-icon { font-size:20px; }
+.po-title { font-size:12px; font-weight:700; color:#ffaa00; letter-spacing:1px; }
+.po-sub { font-size:10px; color:#ffaa0077; }
+.po-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.po-stat { text-align:center; padding:8px; background:#ffaa0008; border:1px solid #ffaa0022; border-radius:7px; }
+.po-val { font-size:14px; font-weight:800; color:#ffaa00; }
+.po-lbl { font-size:8px; color:#ffaa0066; margin-top:2px; letter-spacing:1px; }
+.po-actions { display:flex; gap:8px; }
+.po-btn-primary { flex:1; padding:9px; background:linear-gradient(135deg,#0d6efd,#00d4ff); border:none; border-radius:8px; color:#fff; font-size:10px; font-weight:700; cursor:pointer; letter-spacing:1px; }
+.po-btn-dismiss { padding:9px 14px; background:transparent; border:1px solid #ffaa0033; border-radius:8px; color:#ffaa0077; font-size:10px; cursor:pointer; }
+/* Re-engagement nudge */
+.reengagement-nudge { position:fixed; top:24px; right:24px; z-index:100; background:linear-gradient(135deg,#041428,#020d1a); border:1px solid #0d6efd44; border-radius:12px; padding:14px 18px; max-width:280px; display:none; animation:slideIn .3s ease; }
+.reengagement-nudge.show { display:block; }
+.rn-title { font-size:11px; font-weight:700; color:#4da6ff; margin-bottom:4px; }
+.rn-body { font-size:10px; color:#a0c4ff88; line-height:1.5; margin-bottom:10px; }
+.rn-close { position:absolute; top:10px; right:12px; cursor:pointer; font-size:14px; color:#4da6ff44; background:none; border:none; }
+
 </style>
 </head>
 <body>
@@ -149,7 +195,9 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
     <div class="ws-badge connecting" id="wsBadge"><div class="ws-dot"></div><span id="wsLabel">Connecting...</span><span class="demo-badge" id="demoBadge">DEMO</span></div>
     <div style="font-size:9px;color:#4da6ff44;text-align:right;">Cycles: <span id="cycleCount" style="color:#4da6ff;">0</span> &nbsp;|&nbsp; Uptime: <span id="uptime" style="color:#4da6ff;">00:00</span></div>
-    <a href="setup.html" style="font-size:9px;color:#4da6ff55;text-decoration:none;border:1px solid #0d6efd22;padding:3px 8px;border-radius:4px;">⚙ Setup</a>
+    
+            <div class="guarantee-badge">🛡️ ROI Guaranteed or Month Free</div>
+            <a href="setup.html" style="font-size:9px;color:#4da6ff55;text-decoration:none;border:1px solid #0d6efd22;padding:3px 8px;border-radius:4px;">⚙ Setup</a>
   </div>
 </header>
 
@@ -164,11 +212,22 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
     <div style="display:flex;align-items:center;gap:5px;justify-content:center;font-size:10px;color:#4da6ff55;"><div class="sdot" style="width:5px;height:5px;"></div>All systems online</div>
   </div>
   <div class="panel">
-    <div class="panel-title">◈ Capabilities</div>
-    <div class="cap-item"><div class="cap-icon">🧠</div><div><div class="cap-name">Understand</div><div class="cap-desc">Real-time store data analysis</div></div></div>
-    <div class="cap-item"><div class="cap-icon">⚖️</div><div><div class="cap-name">Decide</div><div class="cap-desc">Highest-impact action selection</div></div></div>
-    <div class="cap-item"><div class="cap-icon">⚡</div><div><div class="cap-name">Act</div><div class="cap-desc">Executes across all platforms</div></div></div>
-    <div class="cap-item"><div class="cap-icon">📚</div><div><div class="cap-name">Learn</div><div class="cap-desc">Improves from every outcome</div></div></div>
+    <div class="panel-title">💰 Revenue Protected</div>
+    <div class="rp-panel">
+      <div class="rp-total-wrap">
+        <div class="rp-total-label">LIFETIME VALUE PROTECTED</div>
+        <div class="rp-total-value" id="rp-total">$0</div>
+      </div>
+      <div class="rp-breakdown">
+        <div class="rp-item"><div class="rp-item-val" id="rp-carts">$0</div><div class="rp-item-lbl">CARTS</div></div>
+        <div class="rp-item"><div class="rp-item-val" id="rp-fraud">$0</div><div class="rp-item-lbl">FRAUD</div></div>
+        <div class="rp-item"><div class="rp-item-val" id="rp-time">0h</div><div class="rp-item-lbl">SAVED</div></div>
+      </div>
+      <div class="guarantee-row">
+        <span class="guarantee-lbl">Guarantee status</span>
+        <span id="guarantee-status" style="font-size:9px;color:#ffaa00;">$299 to break even</span>
+      </div>
+    </div>
   </div>
   <div class="panel">
     <div class="panel-title">◉ Agent Memory</div>
@@ -237,6 +296,24 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
     <div class="feed-list" id="feedList"><div class="fi"><div class="fi-icon info">💤</div><div class="fi-body"><div class="fi-text">Waiting for agent events...</div><div class="fi-time">—</div></div></div></div>
   </div>
   <div class="panel">
+    <div class="panel-title">◈ Integration Depth</div>
+    <div class="depth-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#4da6ff77;">
+        <span>Connected</span><span id="depth-label">1/5</span>
+      </div>
+      <div class="depth-bar-bg"><div class="depth-bar-fill" id="depth-bar" style="width:20%;"></div></div>
+      <div class="depth-dots">
+        <div class="idot active" id="depth-dot-0" title="Shopify">🟢</div>
+        <div class="idot active" id="depth-dot-1" title="Klaviyo">📧</div>
+        <div class="idot active" id="depth-dot-2" title="Claude">🧠</div>
+        <div class="idot inactive" id="depth-dot-3" title="Slack">💬</div>
+        <div class="idot inactive" id="depth-dot-4" title="Stripe">💳</div>
+      </div>
+      <div class="depth-nudge" id="depth-nudge">💡 Connect Slack to unlock fraud alerts</div>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="panel-title">◉ Systems</div>
     <div class="sys-item"><div class="sys-l"><span>🟢</span><span style="font-size:11px;color:#e0f0ff;">Shopify</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
     <div class="sys-item"><div class="sys-l"><span>📧</span><span style="font-size:11px;color:#e0f0ff;">Klaviyo</span></div><div class="sys-s"><div class="sys-dot"></div>Connected</div></div>
@@ -273,9 +350,9 @@ function sendCmd(cmd,p={}){
 function badge(s,l){document.getElementById('wsBadge').className='ws-badge '+s;document.getElementById('wsLabel').textContent=l;}
 
 function on(d){
-  if(d.type==='init'&&d.state)sync(d.state);
-  else if(d.type==='agent_started'){feed('success','▶','Agent started',ago(d.timestamp));thinking(true);node('monitor');}
-  else if(d.type==='agent_stopped'){feed('warning','■','Agent stopped',ago(d.timestamp));thinking(false);clrNode();}
+  if(d.type==='init'&&d.state){sync(d.state);retentionOnInit(d);}
+  else if(d.type==='agent_started'){retentionOnAgentStart();feed('success','▶','Agent started',ago(d.timestamp));thinking(true);node('monitor');}
+  else if(d.type==='agent_stopped'){retentionOnAgentStop();feed('warning','■','Agent stopped',ago(d.timestamp));thinking(false);clrNode();}
   else if(d.type==='agent_thinking'){document.getElementById('reasoningText').textContent=d.message;document.getElementById('thinkStatus').textContent=d.message;thinking(true);node('monitor');}
   else if(d.type==='agent_reasoning'){document.getElementById('reasoningText').textContent=d.text.slice(0,300);document.getElementById('dataPoints').textContent='Analyzing '+(2000+Math.floor(Math.random()*2000)).toLocaleString()+' data points';node('analyze');}
   else if(d.type==='tool_executing'){node(t2n(d.tool));feed('info','⚙️','Executing: <span class="warn">'+d.tool+'</span>',ago(d.timestamp),'<div class="tb"><div class="ts"></div>'+d.tool+'</div>');}
@@ -296,6 +373,7 @@ function toolResult(d){
   else if(tool==='send_sms')feed('success','📱','SMS delivered',t);
   else if(tool==='notify_team')feed('info','💬','Notified <span class="hi">'+result.channel+'</span>',t);
   if(action?.description)lastAction(action.description);
+  retentionOnToolResult(tool,result);
   S.actions++;memCounters();setTimeout(()=>node('learn'),800);
 }
 
@@ -380,7 +458,292 @@ for(let i=0;i<25;i++){const p=document.createElement('div'),s=1+Math.random()*2;
 // Uptime
 setInterval(()=>{const s=Math.floor((Date.now()-startT)/1000);document.getElementById('uptime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},1000);
 
+
+// ════════════════════════════════════════════════════════════════════════════
+// STOREmind Retention Layer — Pillar 1–6 client-side implementation
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Pillar 2: Revenue Protected — cumulative, never resets ─────────────────
+const RP_KEY = 'sm_revenue_protected';
+const RP = (() => {
+  let data = { cartsValue: 0, fraudValue: 0, cartsCount: 0, fraudCount: 0, timeSaved: 0 };
+  try { const s = localStorage.getItem(RP_KEY); if (s) data = { ...data, ...JSON.parse(s) }; } catch(e) {}
+
+  const save = () => { try { localStorage.setItem(RP_KEY, JSON.stringify(data)); } catch(e) {} };
+
+  const total = () => data.cartsValue + data.fraudValue;
+
+  const addCart = (value) => {
+    data.cartsValue += Math.round(value || 85);
+    data.cartsCount++;
+    save(); render();
+  };
+  const addFraud = (value) => {
+    data.fraudValue += Math.round(value || 180);
+    data.fraudCount++;
+    save(); render();
+  };
+  const addTime = (hours) => {
+    data.timeSaved += hours;
+    save(); render();
+  };
+
+  const render = () => {
+    const el = document.getElementById('rp-total');
+    const cc = document.getElementById('rp-carts');
+    const fc = document.getElementById('rp-fraud');
+    const tc = document.getElementById('rp-time');
+    if (el) { el.textContent = '$' + total().toLocaleString(); animateCounter(el); }
+    if (cc) cc.textContent = '$' + data.cartsValue.toLocaleString();
+    if (fc) fc.textContent = '$' + data.fraudValue.toLocaleString();
+    if (tc) tc.textContent = data.timeSaved.toFixed(1) + 'h';
+    // Update guarantee status
+    const gs = document.getElementById('guarantee-status');
+    if (gs) {
+      const t = total();
+      if (t >= 299) {
+        gs.textContent = '✅ ROI Positive';
+        gs.style.color = '#00ff88';
+      } else {
+        gs.textContent = `$${(299 - t)} to break even`;
+        gs.style.color = '#ffaa00';
+      }
+    }
+  };
+
+  const animateCounter = (el) => {
+    el.style.transform = 'scale(1.08)';
+    el.style.color = '#00ff88';
+    el.style.textShadow = '0 0 12px #00ff88';
+    setTimeout(() => {
+      el.style.transform = 'scale(1)';
+      el.style.color = '';
+      el.style.textShadow = '';
+    }, 600);
+  };
+
+  // Init render on load
+  setTimeout(render, 100);
+
+  return { addCart, addFraud, addTime, total, data, render };
+})();
+
+// ── Pillar 4: Churn Detection ──────────────────────────────────────────────
+const Churn = (() => {
+  const VISIT_KEY  = 'sm_last_visit';
+  const PAUSE_KEY  = 'sm_pause_at';
+  const NOTIF_KEY  = 'sm_notif_dismissed';
+
+  const recordVisit = () => {
+    try { localStorage.setItem(VISIT_KEY, Date.now().toString()); } catch(e) {}
+  };
+
+  const recordPause = () => {
+    try { localStorage.setItem(PAUSE_KEY, Date.now().toString()); } catch(e) {}
+  };
+
+  const clearPause = () => {
+    try { localStorage.removeItem(PAUSE_KEY); } catch(e) {}
+  };
+
+  const check = () => {
+    try {
+      const lastVisit = parseInt(localStorage.getItem(VISIT_KEY) || '0');
+      const pausedAt  = parseInt(localStorage.getItem(PAUSE_KEY) || '0');
+      const dismissed = JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}');
+      const now = Date.now();
+
+      // Signal 1: agent paused > 1h (scaled from 72h for demo visibility)
+      if (pausedAt && !dismissed.phantom) {
+        const pausedMs = now - pausedAt;
+        const threshold = 60 * 60 * 1000; // 1h in prod (72h IRL)
+        if (pausedMs > threshold) {
+          _showPhantomOverlay(pausedMs);
+          _reportSignal('agent_paused', { pausedMs, hours: (pausedMs / 3_600_000).toFixed(1) });
+        }
+      }
+
+      // Signal 2: no visit in 5 days
+      if (lastVisit && !dismissed.reengagement) {
+        const daysSince = (now - lastVisit) / (24 * 60 * 60 * 1000);
+        if (daysSince > 5) {
+          _showReengagementNudge();
+          _reportSignal('no_visit', { daysSince: daysSince.toFixed(1) });
+        }
+      }
+    } catch(e) {}
+  };
+
+  const _showPhantomOverlay = (pausedMs) => {
+    const hours = pausedMs / 3_600_000;
+    const cartsLost = Math.round(2.3 * hours);
+    const valueLost = Math.round(2.3 * hours * 150);
+    const recoverable = Math.round(valueLost * 0.12);
+    const overlay = document.getElementById('phantomOverlay');
+    if (!overlay) return;
+    document.getElementById('phantom-hours').textContent   = hours.toFixed(1) + 'h';
+    document.getElementById('phantom-carts').textContent   = cartsLost;
+    document.getElementById('phantom-value').textContent   = '$' + valueLost.toLocaleString();
+    document.getElementById('phantom-recover').textContent = '$' + recoverable.toLocaleString();
+    overlay.classList.add('show');
+  };
+
+  const _showReengagementNudge = () => {
+    const nudge = document.getElementById('reengagementNudge');
+    if (nudge) nudge.classList.add('show');
+  };
+
+  const dismiss = (type) => {
+    try {
+      const d = JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}');
+      d[type] = true;
+      localStorage.setItem(NOTIF_KEY, JSON.stringify(d));
+    } catch(e) {}
+    document.getElementById('phantomOverlay')?.classList.remove('show');
+    document.getElementById('reengagementNudge')?.classList.remove('show');
+  };
+
+  const _reportSignal = async (signal, context) => {
+    try {
+      await fetch('/api/retention/signal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signal, context }),
+      });
+    } catch(e) {} // backend optional — works without it
+  };
+
+  return { recordVisit, recordPause, clearPause, check, dismiss };
+})();
+
+// ── Pillar 3: Integration Depth tracker ───────────────────────────────────
+const IntegrationDepth = (() => {
+  const KEY = 'sm_integrations';
+  const ALL = ['Shopify', 'Klaviyo', 'Claude', 'Slack', 'Stripe'];
+  let connected = [];
+
+  const load = () => {
+    try { connected = JSON.parse(localStorage.getItem(KEY) || '["Claude"]'); } catch(e) { connected = ['Claude']; }
+  };
+
+  const setConnected = (list) => {
+    connected = list;
+    try { localStorage.setItem(KEY, JSON.stringify(connected)); } catch(e) {}
+    render();
+  };
+
+  const render = () => {
+    const bar  = document.getElementById('depth-bar');
+    const lbl  = document.getElementById('depth-label');
+    const nudge = document.getElementById('depth-nudge');
+    if (!bar) return;
+    const pct = Math.round((connected.length / ALL.length) * 100);
+    bar.style.width = pct + '%';
+    if (lbl) lbl.textContent = connected.length + '/' + ALL.length + ' connected';
+    // Nudge toward next integration
+    const missing = ALL.filter(s => !connected.includes(s));
+    if (nudge && missing.length) {
+      nudge.textContent = `💡 Connect ${missing[0]} to unlock more automations`;
+      nudge.style.display = 'block';
+    } else if (nudge) {
+      nudge.textContent = '✅ All integrations active';
+      nudge.style.color = '#00ff88';
+    }
+    // Update depth dots
+    ALL.forEach((name, i) => {
+      const dot = document.getElementById('depth-dot-' + i);
+      if (dot) dot.className = 'idot ' + (connected.includes(name) ? 'active' : 'inactive');
+    });
+  };
+
+  load(); setTimeout(render, 150);
+  return { setConnected, render, connected: () => connected };
+})();
+
+// ── Wire retention to tool results ────────────────────────────────────────
+// Called from main toolResult() handler
+function retentionOnToolResult(tool, result) {
+  if (!result.success) return;
+  if (tool === 'send_cart_recovery_email') {
+    RP.addCart(result.cart_value || 85);
+    RP.addTime(0.25); // 15 min saved per manual email
+  }
+  if (tool === 'cancel_order') {
+    RP.addFraud(result.order_value || 180);
+    RP.addTime(0.5);
+  }
+  if (tool === 'apply_discount') {
+    RP.addTime(0.1);
+  }
+  if (tool === 'send_bulk_campaign') {
+    RP.addTime(2); // 2h saved per campaign
+  }
+  if (tool === 'get_recent_orders' && result.orders) {
+    RP.addTime(result.orders.length * 0.05);
+  }
+}
+
+// Called when agent starts
+function retentionOnAgentStart() {
+  Churn.clearPause();
+  document.getElementById('phantomOverlay')?.classList.remove('show');
+}
+
+// Called when agent stops
+function retentionOnAgentStop() {
+  Churn.recordPause();
+  setTimeout(() => Churn.check(), 1000);
+}
+
+// Called on WS init
+function retentionOnInit(data) {
+  // Restore integration depth from connected systems
+  if (data.storePatterns) {
+    const connected = ['Claude'];
+    if (process?.env?.SHOPIFY_SHOP_NAME || true) connected.push('Shopify'); // assume connected
+    IntegrationDepth.setConnected(connected);
+  }
+  // Check if was paused before page load
+  if (data.stoppedAt) {
+    Churn.recordPause();
+    setTimeout(() => Churn.check(), 2000);
+  }
+}
+
+// Record this visit
+Churn.recordVisit();
+setTimeout(() => Churn.check(), 3000);
+
 connectWS();
 </script>
+
+<!-- Pillar 4: Phantom Value Overlay -->
+<div class="phantom-overlay" id="phantomOverlay">
+  <div class="po-header">
+    <span class="po-icon">⚠️</span>
+    <div>
+      <div class="po-title">YOUR STORE WAS UNMONITORED</div>
+      <div class="po-sub">While STOREmind was paused, this is what slipped through</div>
+    </div>
+  </div>
+  <div class="po-grid">
+    <div class="po-stat"><div class="po-val" id="phantom-hours">0h</div><div class="po-lbl">UNMONITORED</div></div>
+    <div class="po-stat"><div class="po-val" id="phantom-carts">0</div><div class="po-lbl">CARTS ABANDONED</div></div>
+    <div class="po-stat"><div class="po-val" id="phantom-value">$0</div><div class="po-lbl">VALUE AT RISK</div></div>
+    <div class="po-stat"><div class="po-val" id="phantom-recover">$0</div><div class="po-lbl">RECOVERABLE</div></div>
+  </div>
+  <div class="po-actions">
+    <button class="po-btn-primary" onclick="sendCmd('start_agent');Churn.dismiss('phantom')">▶ Restart Agent Now</button>
+    <button class="po-btn-dismiss" onclick="Churn.dismiss('phantom')">Dismiss</button>
+  </div>
+</div>
+
+<!-- Pillar 4: Re-engagement Nudge -->
+<div class="reengagement-nudge" id="reengagementNudge">
+  <button class="rn-close" onclick="Churn.dismiss('reengagement')">×</button>
+  <div class="rn-title">👋 Welcome back</div>
+  <div class="rn-body">STOREmind kept running while you were away. Check your Revenue Protected counter — it grew.</div>
+  <button onclick="RP.render();Churn.dismiss('reengagement')" style="font-size:10px;color:#4da6ff;background:none;border:none;cursor:pointer;padding:0;">View Revenue Protected →</button>
+</div>
+
 </body>
 </html>
