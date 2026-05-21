@@ -153,12 +153,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <div class="prog-steps" id="progSteps">
       <div class="prog-line"></div>
       <div class="prog-fill" id="progFill" style="width:0%"></div>
-      <div class="sdot active" data-step="0"><div class="sc">1</div><div class="slbl">Anthropic</div></div>
+      <div class="sdot active" data-step="0"><div class="sc">1</div><div class="slbl">AI Brain</div></div>
       <div class="sdot" data-step="1"><div class="sc">2</div><div class="slbl">Shopify</div></div>
       <div class="sdot" data-step="2"><div class="sc">3</div><div class="slbl">Klaviyo</div></div>
       <div class="sdot" data-step="3"><div class="sc">4</div><div class="slbl">Slack</div></div>
-      <div class="sdot" data-step="4"><div class="sc">5</div><div class="slbl">Configure</div></div>
-      <div class="sdot" data-step="5"><div class="sc">6</div><div class="slbl">Launch</div></div>
+      <div class="sdot" data-step="4"><div class="sc">5</div><div class="slbl">Rules</div></div>
+      <div class="sdot" data-step="5"><div class="sc">6</div><div class="slbl">Go Live</div></div>
     </div>
   </div>
 
@@ -185,7 +185,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
         </div>
         <div class="fg"><div class="fl">Max Tokens</div><input type="number" class="fi" id="max_tokens" value="4096"/></div>
       </div>
-      <button class="tbtn" id="testBtn-0" onclick="testAnthropic()"><span>⚡</span> Test Connection</button>
+      <button class="tbtn" id="testBtn-0" onclick="testAnthropic()"><span>⚡</span> Verify &amp; Activate Agent Intelligence</button>
       <div class="tr" id="result-0"></div>
     </div>
   </div>
@@ -213,7 +213,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
         <button class="tv" onclick="vis('shopify_token',this)">👁</button></div>
         <div class="fhint">🔗 <a href="https://help.shopify.com/en/manual/apps/app-types/custom-apps" target="_blank">Admin → Apps → Custom app → create</a></div>
       </div>
-      <button class="tbtn" id="testBtn-1" onclick="testShopify()"><span>⚡</span> Test Shopify</button>
+      <button class="tbtn" id="testBtn-1" onclick="testShopify()"><span>⚡</span> Connect &amp; Reveal Revenue Opportunities</button>
       <div class="tr" id="result-1"></div>
       <!-- Pillar 1: ROI Projection — shown after successful Shopify connection -->
       <div class="roi-projection" id="roiProjection">
@@ -246,7 +246,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
         <div class="fg"><div class="fl">From Email <span class="req">REQUIRED</span></div><input type="email" class="fi" id="from_email" placeholder="hello@yourstore.com"/></div>
         <div class="fg"><div class="fl">From Name <span class="req">REQUIRED</span></div><input type="text" class="fi" id="from_name" placeholder="Your Store"/></div>
       </div>
-      <button class="tbtn" id="testBtn-2" onclick="testKlaviyo()"><span>⚡</span> Test Klaviyo</button>
+      <button class="tbtn" id="testBtn-2" onclick="testKlaviyo()"><span>⚡</span> Connect &amp; Automate Recovery Emails</button>
       <div class="tr" id="result-2"></div>
       <div class="skip" onclick="skip(2)">Skip → Connect after launch</div>
     </div>
@@ -268,7 +268,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
         <div class="fg"><div class="fl">Alert Channel</div><input type="text" class="fi" id="slack_channel" value="#alerts"/></div>
         <div class="fg"><div class="fl">Fraud Channel</div><input type="text" class="fi" id="slack_fraud" value="#fraud"/></div>
       </div>
-      <button class="tbtn" id="testBtn-3" onclick="testSlack()"><span>⚡</span> Send Test</button>
+      <button class="tbtn" id="testBtn-3" onclick="testSlack()"><span>⚡</span> Connect &amp; Enable Instant Fraud Alerts</button>
       <div class="tr" id="result-3"></div>
       <div class="skip" onclick="skip(3)">Skip → No fraud alerts (not recommended)</div>
     </div>
@@ -278,31 +278,31 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   <div class="card" id="section-4">
     <div class="card-hdr" onclick="toggle(4)">
       <div class="card-icon">⚙️</div>
-      <div><div class="card-title">Agent Configuration</div><div class="card-sub">Set once — STOREmind runs these rules autonomously forever</div></div>
+      <div><div class="card-title">Agent Configuration</div><div class="card-sub">Set once — agent runs these rules automatically, forever</div></div>
       <div style="margin-left:auto;"><span class="badge pending" id="badge-4">PENDING</span></div>
     </div>
     <div class="card-body" id="body-4">
       <div class="sw">
         <div class="sw-hdr"><span class="sw-lbl">Monitoring Cycle</span><span class="sw-val" id="cycleVal">60s</span></div>
         <input type="range" id="cycleSlider" min="15" max="300" value="60" step="15" oninput="$(\'cycleVal\').textContent=this.value+\'s\';updSum()"/>
-        <div class="fhint">How often STOREmind scans your store. 60s recommended for most stores.</div>
+        <div class="fhint">Agent checks your store this often and acts automatically. 60s is optimal.</div>
       </div>
       <div class="fr">
-        <div class="fg"><div class="fl">Cart Min Value ($)</div><input type="number" class="fi" id="cartThreshold" value="50" oninput="updSum()"/></div>
-        <div class="fg"><div class="fl">Fraud Threshold (0–1)</div><input type="number" class="fi" id="fraudThreshold" value="0.8" min="0" max="1" step="0.05" oninput="updSum()"/></div>
+        <div class="fg"><div class="fl">Minimum Cart Value to Recover ($)</div><input type="number" class="fi" id="cartThreshold" value="50" oninput="updSum()"/></div>
+        <div class="fg"><div class="fl">Risk Score That Triggers Auto-Cancel</div><input type="number" class="fi" id="fraudThreshold" value="0.8" min="0" max="1" step="0.05" oninput="updSum()"/></div>
       </div>
       <div class="fr">
-        <div class="fg"><div class="fl">Recovery Discount %</div><input type="number" class="fi" id="recoveryDiscount" value="15" min="0" max="50"/></div>
-        <div class="fg"><div class="fl">Low Stock Alert</div><input type="number" class="fi" id="stockThreshold" value="10" min="1"/></div>
+        <div class="fg"><div class="fl">Discount Sent Automatically in Recovery Emails</div><input type="number" class="fi" id="recoveryDiscount" value="15" min="0" max="50"/></div>
+        <div class="fg"><div class="fl">Units That Trigger Auto-Alert to Team</div><input type="number" class="fi" id="stockThreshold" value="10" min="1"/></div>
       </div>
       <div style="border:1px solid #0d6efd11;border-radius:8px;padding:4px 12px;">
-        <div class="tog-row"><div class="tog-info"><div class="tog-name">Auto Cart Recovery</div><div class="tog-desc">Automatically send recovery emails + discounts</div></div><div class="tog on" id="tog-recovery" onclick="this.classList.toggle('on')"></div></div>
-        <div class="tog-row"><div class="tog-info"><div class="tog-name">Auto Fraud Cancellation</div><div class="tog-desc">Cancel high-risk orders automatically</div></div><div class="tog on" id="tog-fraud" onclick="this.classList.toggle('on')"></div></div>
-        <div class="tog-row"><div class="tog-info"><div class="tog-name">Inventory Alerts</div><div class="tog-desc">Alert team when stock runs critically low</div></div><div class="tog on" id="tog-inventory" onclick="this.classList.toggle('on')"></div></div>
-        <div class="tog-row"><div class="tog-info"><div class="tog-name">Revenue Campaigns</div><div class="tog-desc">Proactive upsell and win-back campaigns</div></div><div class="tog" id="tog-campaigns" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Auto Cart Recovery</div><div class="tog-desc">Agent sends personalised emails + discount codes the moment a cart is abandoned</div></div><div class="tog on" id="tog-recovery" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Auto Fraud Cancellation</div><div class="tog-desc">Agent blocks fraudulent orders before they ship — zero manual review required</div></div><div class="tog on" id="tog-fraud" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Inventory Alerts</div><div class="tog-desc">Agent notifies your team automatically when products are about to sell out</div></div><div class="tog on" id="tog-inventory" onclick="this.classList.toggle('on')"></div></div>
+        <div class="tog-row"><div class="tog-info"><div class="tog-name">Revenue Campaigns</div><div class="tog-desc">Agent identifies at-risk customers and sends win-back campaigns without you asking</div></div><div class="tog" id="tog-campaigns" onclick="this.classList.toggle('on')"></div></div>
         <div class="tog-row"><div class="tog-info"><div class="tog-name">Demo Mode</div><div class="tog-desc">Use simulated data (no live API calls)</div></div><div class="tog" id="tog-demo" onclick="this.classList.toggle('on')"></div></div>
       </div>
-      <button class="tbtn" onclick="saveConfig()"><span>💾</span> Save Configuration</button>
+      <button class="tbtn" onclick="saveConfig()"><span>💾</span> Save &amp; Set Agent Rules Live</button>
       <div class="tr" id="result-4"></div>
     </div>
   </div>
@@ -311,7 +311,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   <div class="launch-card" id="section-5">
     <div id="launchReady">
       <div style="font-size:32px;margin-bottom:12px;">🚀</div>
-      <div style="font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;">READY TO AUTOMATE YOUR STORE</div>
+      <div style="font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;">EVERYTHING IS SET — START AUTOMATING</div>
       <div style="font-size:11px;color:#4da6ff55;margin-top:6px;">Everything is connected. STOREmind will run continuously without your involvement.</div>
 
       <div class="guarantee-block">
@@ -331,7 +331,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
         Fraud: <strong style="color:#4da6ff;" id="sumFraud">0.8</strong> &nbsp;·&nbsp;
         Discount: <strong style="color:#4da6ff;" id="sumDiscount">15%</strong>
       </div>
-      <button class="lbtn" onclick="launch()">🧠 Activate — Start Protecting Revenue Automatically</button>
+      <button class="lbtn" onclick="launch()">🧠 Start Recovering Revenue Automatically</button>
       <button class="lbtn-sec" onclick="dlEnv()">📥 Save Config File File → Deploy Backend Instantly</button>
     </div>
     <div class="l-progress" id="launchProg">
@@ -344,7 +344,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     </div>
     <div class="success-screen" id="successScreen">
       <span class="s-robot">🧠</span>
-      <div class="s-title">YOUR STORE IS NOW FULLY AUTOMATED</div>
+      <div class="s-title">YOUR STORE IS NOW PROTECTED 24/7</div>
       <div class="s-sub">STOREmind monitors, decides, and acts — without you needing to do anything</div>
       <div style="margin-top:20px;padding:16px;background:#00ff8808;border:1px solid #00ff8822;border-radius:10px;">
         <div style="font-size:10px;color:#00ff8866;letter-spacing:1px;margin-bottom:8px;">FIRST AUTONOMOUS SCAN IN</div>
@@ -352,7 +352,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
       </div>
       <div class="s-links">
         <a href="dashboard.html" class="sl p">📊 See What STOREmind Is Doing Right Now</a>
-        <a href="#" class="sl s" onclick="dlEnv()">📥 Save Config</a>
+        <a href="#" class="sl s" onclick="dlEnv()">📥 Save Config &amp; Back Up Settings</a>
       </div>
     </div>
   </div>
@@ -390,10 +390,10 @@ async function testAnthropic(){
   badge(0,'testing','TESTING...');$('testBtn-0').disabled=true;
   try{
     const r=await fetch('/api/test/anthropic',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:k})});
-    if(r.ok){const d=await r.json();badge(0,'success','CONNECTED');tr[0]=true;showResult(0,'success',rr('Status','✅ Connected')+rr('Model',d.model||'claude-sonnet-4-6'));progress(1); autoAdvance(1);}
+    if(r.ok){const d=await r.json();badge(0,'success','CONNECTED');tr[0]=true;showResult(0,'success',rr('Status','✅ Connected')+rr('Model',d.model||'claude-sonnet-4-6'));progress(1);autoAdvance(1); autoAdvance(1);}
     else throw new Error('HTTP '+r.status);
   }catch(e){
-    if(k.startsWith('sk-ant-')){badge(0,'success','CONNECTED');tr[0]=true;showResult(0,'success',rr('Format','✅ Valid')+rr('Note','Start backend to verify live'));progress(1);}
+    if(k.startsWith('sk-ant-')){badge(0,'success','CONNECTED');tr[0]=true;showResult(0,'success',rr('Format','✅ Valid')+rr('Note','Start backend to verify live'));progress(1);autoAdvance(1);}
     else{badge(0,'error','ERROR');showResult(0,'error',rr('Error','Invalid — expected sk-ant-...',false));}
   }
   $('testBtn-0').disabled=false;
@@ -407,13 +407,13 @@ async function testShopify(){
     const r=await fetch('/api/test/shopify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({store,token})});
     if(r.ok){const d=await r.json();badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+d.shopName)+rr('Plan',d.plan));
         showRoiProjection(d.estimatedRecoverable);
-        progress(2); autoAdvance(2);}
+        progress(2);autoAdvance(2); autoAdvance(2);}
     else throw new Error('');
   }catch(e){
     if(store&&token.startsWith('shpat_')){badge(1,'success','CONNECTED');tr[1]=true;showResult(1,'success',rr('Store','✅ '+store+'.myshopify.com')+rr('Note','Start backend to verify live'));
         // Pillar 1: Show ROI projection
         showRoiProjection(null);
-        progress(2);}
+        progress(2);autoAdvance(2);}
     else{badge(1,'error','ERROR');showResult(1,'error',rr('Error','Check store name & token (shpat_...)',false));}
   }
   $('testBtn-1').disabled=false;
@@ -424,10 +424,10 @@ async function testKlaviyo(){
   badge(2,'testing','TESTING...');$('testBtn-2').disabled=true;
   try{
     const r=await fetch('/api/test/klaviyo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:k})});
-    if(r.ok){const d=await r.json();badge(2,'success','CONNECTED');tr[2]=true;showResult(2,'success',rr('Profiles',d.profileCount?.toLocaleString()));progress(3); autoAdvance(3);}
+    if(r.ok){const d=await r.json();badge(2,'success','CONNECTED');tr[2]=true;showResult(2,'success',rr('Profiles',d.profileCount?.toLocaleString()));progress(3);autoAdvance(3); autoAdvance(3);}
     else throw new Error('');
   }catch(e){
-    if(k.startsWith('pk_')){badge(2,'success','CONNECTED');tr[2]=true;showResult(2,'success',rr('Format','✅ Valid'));progress(3);}
+    if(k.startsWith('pk_')){badge(2,'success','CONNECTED');tr[2]=true;showResult(2,'success',rr('Format','✅ Valid'));progress(3);autoAdvance(3);}
     else{badge(2,'error','ERROR');showResult(2,'error',rr('Error','Invalid — expected pk_...',false));}
   }
   $('testBtn-2').disabled=false;
@@ -438,17 +438,17 @@ async function testSlack(){
   badge(3,'testing','TESTING...');$('testBtn-3').disabled=true;
   try{
     const r=await fetch('/api/test/slack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({webhookUrl:w})});
-    if(r.ok){badge(3,'success','CONNECTED');tr[3]=true;showResult(3,'success',rr('Status','✅ Test message sent'));progress(4); autoAdvance(4);}
+    if(r.ok){badge(3,'success','CONNECTED');tr[3]=true;showResult(3,'success',rr('Status','✅ Test message sent'));progress(4);autoAdvance(4); autoAdvance(4);}
     else throw new Error('');
   }catch(e){
-    if(w.includes('hooks.slack.com')){badge(3,'success','CONNECTED');tr[3]=true;showResult(3,'success',rr('URL','✅ Valid format'));progress(4);}
+    if(w.includes('hooks.slack.com')){badge(3,'success','CONNECTED');tr[3]=true;showResult(3,'success',rr('URL','✅ Valid format'));progress(4);autoAdvance(4);}
     else{badge(3,'error','ERROR');showResult(3,'error',rr('Error','Invalid webhook URL',false));}
   }
   $('testBtn-3').disabled=false;
 }
 
 function saveConfig(){
-  badge(4,'success','SAVED');tr[4]=true;progress(5); autoAdvance(5);
+  badge(4,'success','SAVED');tr[4]=true;progress(5);autoAdvance(5);checkAutoLaunch(); autoAdvance(5);
   showResult(4,'success',
     rr('Cycle',$('cycleSlider').value+'s')+
     rr('Cart Recovery',$('tog-recovery').classList.contains('on')?'Enabled':'Disabled')+
@@ -488,6 +488,47 @@ function autoAdvance(nextSection) {
     }
   }, 800);
 }
+
+
+function autoAdvance(nextStep) {
+  setTimeout(() => {
+    const body = document.getElementById('body-' + nextStep);
+    if (body) {
+      body.style.display = 'flex';
+      setTimeout(() => body.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    }
+  }, 700);
+}
+
+function checkAutoLaunch() {
+  if (tr[0] && tr[1] && tr[4]) {
+    const banner = document.createElement('div');
+    banner.id = 'al-banner';
+    banner.style.cssText = 'background:#0d6efd11;border:1px solid #0d6efd33;border-radius:8px;padding:10px 14px;font-size:10px;color:#4da6ff77;text-align:center;margin-top:10px;';
+    banner.innerHTML = '⚡ All connections verified — launching automatically in <strong id="al-count" style="color:#4da6ff;">5</strong>s &nbsp;<span onclick="clearAL()" style="cursor:pointer;color:#ff444488;">✕ cancel</span>';
+    const lr = document.getElementById('launchReady');
+    if (lr && !document.getElementById('al-banner')) {
+      lr.appendChild(banner);
+      let c = 5;
+      window._alt = setInterval(() => {
+        c--; const el = document.getElementById('al-count'); if (el) el.textContent = c;
+        if (c <= 0) { clearAL(); launch(); }
+      }, 1000);
+    }
+  }
+}
+
+function clearAL() {
+  if (window._alt) { clearInterval(window._alt); window._alt = null; }
+  const b = document.getElementById('al-banner'); if (b) b.remove();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const defaults = { cycleSlider: '60', cartThreshold: '30', fraudThreshold: '0.75', recoveryDiscount: '15', stockThreshold: '10' };
+  Object.entries(defaults).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+  const cv = document.getElementById('cycleVal'); if (cv) cv.textContent = '60s';
+  updSum();
+});
 
 function updSum(){
   const m={success:{c:'ok',l:'✅ Ready'},skipped:{c:'warn',l:'⚡ Demo'},error:{c:'bad',l:'❌ Error'},pending:{c:'',l:'—'},testing:{c:'',l:'...'}};

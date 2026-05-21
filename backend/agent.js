@@ -123,6 +123,7 @@ BEHAVIOUR: Explain reasoning before each action. Chain tools when logical. Prior
 
         if (resp.stop_reason === 'end_turn') {
           go = false;
+          this._errCount = 0;
           this.cycleCount++;
           this._consecutiveErrors = 0;
           this.broadcast({ type: 'cycle_complete', state: this.memory.getState(), cycleCount: this.cycleCount, timestamp: Date.now() });
