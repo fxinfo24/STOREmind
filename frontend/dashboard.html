@@ -176,6 +176,22 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
 .rn-body { font-size:10px; color:#a0c4ff88; line-height:1.5; margin-bottom:10px; }
 .rn-close { position:absolute; top:10px; right:12px; cursor:pointer; font-size:14px; color:#4da6ff44; background:none; border:none; }
 
+
+/* ── Approval Queue ───────────────────────────────────────── */
+.aq-item { background:#ffaa0008; border:1px solid #ffaa0033; border-radius:8px; padding:10px; }
+.aq-tool { font-size:10px; font-weight:700; color:#ffaa00; margin-bottom:4px; }
+.aq-reasoning { font-size:9px; color:#a0c4ff88; line-height:1.5; margin-bottom:8px; max-height:50px; overflow:hidden; }
+.aq-value { font-size:11px; color:#fff; font-weight:700; margin-bottom:6px; }
+.aq-btns { display:flex; gap:6px; }
+.aq-approve { flex:1; padding:6px; background:#00ff8811; border:1px solid #00ff8844; border-radius:6px; color:#00ff88; font-size:9px; font-weight:700; cursor:pointer; }
+.aq-reject  { flex:1; padding:6px; background:#ff444411; border:1px solid #ff444433; border-radius:6px; color:#ff4444; font-size:9px; font-weight:700; cursor:pointer; }
+.aq-approve:hover { background:#00ff8822; }
+.aq-reject:hover  { background:#ff444422; }
+.aq-badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:8px; font-weight:700; letter-spacing:1px; }
+.aq-critical { background:#ff444411; color:#ff4444; border:1px solid #ff444433; }
+.aq-high     { background:#ffaa0011; color:#ffaa00; border:1px solid #ffaa0033; }
+.aq-normal   { background:#0d6efd11; color:#4da6ff; border:1px solid #0d6efd33; }
+
 </style>
 </head>
 <body>
@@ -310,6 +326,39 @@ body{background:#020d1a;color:#e0f0ff;font-family:'Segoe UI',system-ui,sans-seri
         <div class="idot inactive" id="depth-dot-4" title="Stripe">💳</div>
       </div>
       <div class="depth-nudge" id="depth-nudge">💡 Connect Slack → get fraud blocked automatically</div>
+    </div>
+  </div>
+
+
+  <!-- Approval Queue Panel — shows pending agent actions for merchant review -->
+  <div class="panel" id="approvalPanel" style="display:none;">
+    <div class="panel-title" style="color:#ffaa00;">
+      ⚠ Pending Approvals
+      <span style="margin-left:auto;background:#ffaa0022;border:1px solid #ffaa0033;border-radius:10px;padding:2px 8px;font-size:9px;color:#ffaa00;" id="approvalCount">0</span>
+    </div>
+    <div id="approvalList" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- Cost Tracker Panel -->
+  <div class="panel" id="costPanel">
+    <div class="panel-title">💸 Cost Tracker</div>
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid #0d6efd11;">
+        <span style="color:#4da6ff77;">This cycle cost</span>
+        <span style="color:#e0f0ff;" id="costCycle">$0.00</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid #0d6efd11;">
+        <span style="color:#4da6ff77;">Total spend</span>
+        <span style="color:#e0f0ff;" id="costTotal">$0.00</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid #0d6efd11;">
+        <span style="color:#4da6ff77;">Monthly projection</span>
+        <span style="color:#e0f0ff;" id="costMonthly">$0.00</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;">
+        <span style="color:#4da6ff77;">Net margin (vs $299)</span>
+        <span style="color:#00ff88;" id="costMargin">$299.00</span>
+      </div>
     </div>
   </div>
 
@@ -742,7 +791,108 @@ Churn.recordVisit();
 setTimeout(() => Churn.check(), 3000);
 
 let _errorRestarts = 0;
+
+// ── Approval Queue ───────────────────────────────────────────────────────
+const ApprovalUI = (() => {
+  let pendingItems = [];
+
+  const render = () => {
+    const list  = document.getElementById('approvalList');
+    const count = document.getElementById('approvalCount');
+    const panel = document.getElementById('approvalPanel');
+    if (!list || !count || !panel) return;
+    panel.style.display = pendingItems.length > 0 ? 'block' : 'none';
+    count.textContent = pendingItems.length;
+    list.innerHTML = pendingItems.map(item => `
+      <div class="aq-item" id="aq-${item.id}">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <div class="aq-tool">${_toolLabel(item.tool)}</div>
+          <span class="aq-badge aq-${item.priority}">${item.priority.toUpperCase()}</span>
+        </div>
+        <div class="aq-value">${_itemValue(item)}</div>
+        <div class="aq-reasoning">${item.reasoning ? item.reasoning.slice(0,120)+'...' : 'Awaiting agent reasoning...'}</div>
+        <div class="aq-btns">
+          <button class="aq-approve" onclick="approveAction(${item.id})">✅ Approve & Execute</button>
+          <button class="aq-reject"  onclick="rejectAction(${item.id})">❌ Reject</button>
+        </div>
+      </div>`).join('');
+  };
+
+  const add = (item) => {
+    pendingItems = pendingItems.filter(i => i.id !== item.id);
+    pendingItems.unshift(item);
+    render();
+    // Flash notification
+    feed('warning', '⚠️', `<span class="warn">Approval needed:</span> ${_toolLabel(item.tool)}`, 'now');
+  };
+
+  const remove = (id) => {
+    pendingItems = pendingItems.filter(i => i.id !== id);
+    render();
+  };
+
+  const _toolLabel = t => ({
+    cancel_order:             '🛡️ Cancel Fraud Order',
+    apply_discount:           '🏷️ Apply Discount',
+    send_cart_recovery_email: '✉️ Send Recovery Email',
+    send_bulk_campaign:       '📣 Send Campaign',
+    send_sms:                 '📱 Send SMS',
+  }[t] || t);
+
+  const _itemValue = item => {
+    if (item.tool === 'cancel_order') return `Order ${item.input?.order_id} — fraud suspected`;
+    if (item.tool === 'apply_discount') return `${item.input?.discount_percent}% off → Customer ${item.input?.customer_id}`;
+    if (item.tool === 'send_cart_recovery_email') return `→ ${item.input?.customer_email}`;
+    return JSON.stringify(item.input || {}).slice(0,60);
+  };
+
+  return { add, remove, render };
+})();
+
+function approveAction(id) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ command: 'approve_action', id }));
+  else feed('warning','⚠️','Backend offline — cannot approve in demo mode','now');
+  ApprovalUI.remove(id);
+}
+function rejectAction(id) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ command: 'reject_action', id }));
+  ApprovalUI.remove(id);
+}
+
+// ── Cost Tracker ─────────────────────────────────────────────────────────
+const CostUI = (() => {
+  let total = 0, monthly = 0;
+  const fmt = v => '$' + v.toFixed(4);
+  const update = (cycleUsd, cumCost) => {
+    const el = id => document.getElementById(id);
+    if (el('costCycle'))   el('costCycle').textContent   = fmt(cycleUsd || 0);
+    if (el('costTotal'))   el('costTotal').textContent   = fmt(cumCost?.totalCostUsd || 0);
+    const proj = (cumCost?.totalCycles > 0)
+      ? (cumCost.totalCostUsd / cumCost.totalCycles) * (24*3600/60) * 30 : 0;
+    if (el('costMonthly')) el('costMonthly').textContent = '$' + proj.toFixed(2);
+    const margin = 299 - proj;
+    const me = el('costMargin');
+    if (me) { me.textContent = '$' + margin.toFixed(2); me.style.color = margin > 0 ? '#00ff88' : '#ff4444'; }
+  };
+  return { update };
+})();
+
+// Wire into existing on() handler extensions
+const _origOn = window.on;
+
+// Patch on() to handle approval + cost events
+const _baseOn = on;
+window.on = function(d) {
+  _baseOn(d);
+  if (d.type === 'approval_required') ApprovalUI.add({ ...d, reasoning: d.reasoning });
+  if (d.type === 'approval_decided')  ApprovalUI.remove(d.id);
+  if (d.type === 'tool_skipped')      feed('warning','⏸','Action skipped — approval rejected','now');
+  if (d.type === 'cycle_complete' && d.cost) CostUI.update(d.cost.cycleUsd, d.cumCost);
+  if (d.type === 'init' && d.pendingApprovals?.length) { d.pendingApprovals.forEach(a => ApprovalUI.add(a)); }
+};
+
 connectWS();
+
 </script>
 
 <!-- Pillar 4: Phantom Value Overlay -->

@@ -1,128 +1,150 @@
-// STOREmind — Express + WebSocket Server v2.0 (with retention layer)
-import express from 'express';
+// STOREmind — Server v3.0
+// Multi-tenant | Approval queue | Webhooks | Cost tracking | Real Shopify API
+import express      from 'express';
 import { WebSocketServer } from 'ws';
-import { createServer } from 'http';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { STOREmindAgent } from './agent.js';
-import { OnboardingSequence } from './retention/onboarding.js';
-import { WeeklyDigest } from './retention/digest.js';
+import { createServer }    from 'http';
+import cors     from 'cors';
+import dotenv   from 'dotenv';
+import { StoreManager }       from './StoreManager.js';
+import { OnboardingSequence }  from './retention/onboarding.js';
+import { WeeklyDigest }        from './retention/digest.js';
+import { verifyShopifyWebhook, webhookToEvent, registerWebhooks } from './webhooks/handler.js';
 
 dotenv.config();
 
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error('[STOREmind] FATAL: ANTHROPIC_API_KEY not set in .env');
-  process.exit(1);
-}
+if (!process.env.ANTHROPIC_API_KEY) { console.error('[STOREmind] FATAL: ANTHROPIC_API_KEY not set'); process.exit(1); }
 
 const app = express();
 const httpServer = createServer(app);
+
 app.use(cors());
+// Raw body for webhook signature verification
+app.use('/webhooks', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
-// ── WebSocket ──────────────────────────────────────────────────────────────
+// ── WebSocket ────────────────────────────────────────────────────────────
 const wss = new WebSocketServer({ server: httpServer });
-const clients = new Set();
+const clients = new Map(); // storeId → Set<ws>
 
 function broadcast(data) {
+  const storeId = data.storeId || 'default';
   const msg = JSON.stringify(data);
-  for (const c of clients) { if (c.readyState === 1) c.send(msg); }
+  // Broadcast to clients subscribed to this store (or all if no storeId)
+  for (const [sid, sclients] of clients) {
+    if (sid === storeId || sid === 'all') {
+      for (const c of sclients) { if (c.readyState === 1) c.send(msg); }
+    }
+  }
 }
 
-wss.on('connection', ws => {
-  clients.add(ws);
-  console.log(`[WS] Client connected — total: ${clients.size}`);
+wss.on('connection', (ws, req) => {
+  const storeId = new URL(req.url, 'http://localhost').searchParams.get('storeId') || 'default';
+  if (!clients.has(storeId)) clients.set(storeId, new Set());
+  clients.get(storeId).add(ws);
+  console.log(`[WS] Client connected — store: ${storeId}, total: ${clients.get(storeId).size}`);
 
-  // Send full state on connect — includes retention data
-  ws.send(JSON.stringify({
-    type: 'init',
-    state: agent.getStatus().state,
-    storePatterns: agent.getStatus().storePatterns,
-    cycleCount: agent.getStatus().cycleCount,
-    stoppedAt: agent.getStatus().stoppedAt,
-    timestamp: Date.now(),
-  }));
+  const store = manager.get(storeId);
+  if (store) {
+    ws.send(JSON.stringify({ type: 'init', storeId, state: store.agent.getStatus().state, pendingApprovals: store.approvalQueue.getPending(), approvalStats: store.approvalQueue.getStats(), costTracker: store.agent.costTracker, timestamp: Date.now() }));
+  }
 
-  ws.on('close', () => {
-    clients.delete(ws);
-    console.log(`[WS] Client disconnected — total: ${clients.size}`);
-  });
-
+  ws.on('close', () => { clients.get(storeId)?.delete(ws); });
   ws.on('message', raw => {
     try {
       const msg = JSON.parse(raw.toString());
-      if (msg.command === 'start_agent')     agent.start(msg.interval);
-      if (msg.command === 'stop_agent')      agent.stop();
-      if (msg.command === 'run_cycle')       agent.runCycle();
-      if (msg.command === 'get_phantom')     _sendPhantomValue(ws);
-      if (msg.command === 'send_digest')     digest.send().then(d => { if (d) broadcast(d); });
+      const sid = msg.storeId || storeId;
+      const store = manager.get(sid);
+      if (!store) return;
+      if (msg.command === 'start_agent')   store.agent.start(msg.interval);
+      if (msg.command === 'stop_agent')    store.agent.stop();
+      if (msg.command === 'run_cycle')     store.agent.runCycle();
+      if (msg.command === 'get_phantom')   { const s = store.agent.getStatus(); if (s.stoppedAt) ws.send(JSON.stringify({ type: 'phantom_value', phantom: store.agent.getPhantomValue(Date.now()-s.stoppedAt), timestamp: Date.now() })); }
+      // Approval decisions
+      if (msg.command === 'approve_action') { const r = store.approvalQueue.decide(msg.id, 'approve'); broadcast({ type: 'approval_result', storeId: sid, ...r, timestamp: Date.now() }); }
+      if (msg.command === 'reject_action')  { const r = store.approvalQueue.decide(msg.id, 'reject');  broadcast({ type: 'approval_result', storeId: sid, ...r, timestamp: Date.now() }); }
     } catch (e) { console.error('[WS] Parse error:', e.message); }
   });
 });
 
-function _sendPhantomValue(ws) {
-  const stoppedAt = agent.getStatus().stoppedAt;
-  if (!stoppedAt) return;
-  const pausedMs = Date.now() - stoppedAt;
-  const phantom = agent.getPhantomValue(pausedMs);
-  const msg = JSON.stringify({ type: 'phantom_value', phantom, timestamp: Date.now() });
-  ws.send(msg);
-}
+// ── Store Manager ────────────────────────────────────────────────────────
+const manager = new StoreManager(broadcast);
 
-// ── Retention: Pillar 1 — hook first cycle ─────────────────────────────────
+// Register default store from .env
+const DEFAULT_STORE = process.env.SHOPIFY_SHOP_NAME || 'storemind-hatbvuvt';
+const defaultStore  = manager.register(DEFAULT_STORE);
+
+// Retention layer
 const onboarding = new OnboardingSequence();
-agent.onFirstCycle = (stats) => {
-  console.log('[Retention] First cycle — triggering onboarding sequence');
-  onboarding.onFirstCycle(stats);
-  broadcast({ type: 'first_cycle', stats, timestamp: Date.now() });
-};
-
-// ── Retention: Pillar 2 — weekly digest ───────────────────────────────────
-const digest = new WeeklyDigest(() => agent.getStatus());
+defaultStore.agent.onFirstCycle = (stats) => { onboarding.onFirstCycle(stats); broadcast({ type: 'first_cycle', stats, storeId: DEFAULT_STORE, timestamp: Date.now() }); };
+const digest = new WeeklyDigest(() => defaultStore.agent.getStatus());
 digest.start();
 
-// ── Retention: Pillar 5 — 30-day guarantee check ──────────────────────────
-setTimeout(() => {
-  const stats = agent.getStatus();
-  const totalProtected = (stats.state?.metrics?.revenueInfluenced || 0) +
-                         (stats.state?.metrics?.cartsRecovered || 0) * 85;
-  onboarding.onGuaranteeCheck(totalProtected);
-  broadcast({ type: 'guarantee_check', totalProtected, timestamp: Date.now() });
-}, 30 * 24 * 60 * 60 * 1000);
+// ── REST API ─────────────────────────────────────────────────────────────
+app.get('/health', (_, res) => res.json({ status: 'ok', stores: manager.status(), version: '3.0' }));
 
-// ── REST API ───────────────────────────────────────────────────────────────
-app.get('/health',      (_, res) => res.json({ status: 'ok', agent: agent.getStatus() }));
-app.get('/api/state',   (_, res) => res.json(agent.getStatus()));
-app.get('/api/actions', (req, res) => res.json(agent.getStatus().state.recentActions.slice(0, parseInt(req.query.limit ?? '20'))));
-
-app.post('/api/agent/start', (req, res) => { agent.start(req.body?.interval); res.json({ success: true }); });
-app.post('/api/agent/stop',  (_, res)   => { agent.stop(); res.json({ success: true }); });
-app.post('/api/agent/run',   (_, res)   => { agent.runCycle(); res.json({ success: true }); });
-
-// Retention endpoints
-app.get('/api/retention/phantom', (_, res) => {
-  const stoppedAt = agent.getStatus().stoppedAt;
-  if (!stoppedAt) return res.json({ paused: false });
-  const pausedMs = Date.now() - stoppedAt;
-  res.json({ paused: true, pausedMs, phantom: agent.getPhantomValue(pausedMs) });
+// Store management
+app.get('/api/stores',                (_, res) => res.json(manager.status()));
+app.post('/api/stores/:id/start',     (req, res) => { manager.getAgent(req.params.id)?.start(req.body?.interval); res.json({ ok: true }); });
+app.post('/api/stores/:id/stop',      (req, res) => { manager.getAgent(req.params.id)?.stop(); res.json({ ok: true }); });
+app.post('/api/stores/:id/cycle',     (req, res) => { manager.getAgent(req.params.id)?.runCycle(); res.json({ ok: true }); });
+app.get('/api/stores/:id/phantom',    (req, res) => {
+  const a = manager.getAgent(req.params.id);
+  const s = a?.getStatus();
+  if (!s?.stoppedAt) return res.json({ paused: false });
+  res.json({ paused: true, phantom: a.getPhantomValue(Date.now() - s.stoppedAt) });
 });
 
-app.get('/api/retention/patterns', (_, res) => {
-  res.json(agent.getStatus().storePatterns);
+// Shorthand for default store (backwards compat)
+app.get('/api/state',          (_, res) => res.json(defaultStore.agent.getStatus()));
+app.get('/api/actions',        (req, res) => res.json(defaultStore.agent.getStatus().state.recentActions.slice(0, parseInt(req.query.limit ?? '20'))));
+app.post('/api/agent/start',   (req, res) => { defaultStore.agent.start(req.body?.interval); res.json({ ok: true }); });
+app.post('/api/agent/stop',    (_, res)   => { defaultStore.agent.stop(); res.json({ ok: true }); });
+app.post('/api/agent/run',     (_, res)   => { defaultStore.agent.runCycle(); res.json({ ok: true }); });
+
+// Approval queue
+app.get('/api/approvals',      (_, res) => res.json({ pending: defaultStore.approvalQueue.getPending(), stats: defaultStore.approvalQueue.getStats() }));
+app.post('/api/approvals/:id/approve', (req, res) => res.json(defaultStore.approvalQueue.decide(parseInt(req.params.id), 'approve')));
+app.post('/api/approvals/:id/reject',  (req, res) => res.json(defaultStore.approvalQueue.decide(parseInt(req.params.id), 'reject')));
+
+// Cost tracking
+app.get('/api/costs',          (_, res) => res.json(defaultStore.agent.costTracker));
+app.get('/api/costs/breakdown', (_, res) => {
+  const ct = defaultStore.agent.costTracker;
+  const monthlyProjection = ct.totalCycles > 0
+    ? (ct.totalCostUsd / ct.totalCycles) * (24 * 3600 / parseInt(process.env.CYCLE_INTERVAL || '60')) * 30
+    : 0;
+  res.json({ ...ct, avgCostPerCycle: ct.totalCycles > 0 ? ct.totalCostUsd / ct.totalCycles : 0, monthlyProjectionUsd: monthlyProjection, margin: 299 - monthlyProjection });
 });
 
-app.post('/api/retention/signal', (req, res) => {
-  // Pillar 4: receive churn signals from dashboard
-  const { signal, context } = req.body ?? {};
-  console.log(`[Retention] Churn signal: ${signal}`, context ?? '');
-  // Future: persist to DB, trigger intervention workflows
-  res.json({ received: true, signal });
+// Retention
+app.get('/api/retention/phantom',   (_, res) => { const s = defaultStore.agent.getStatus(); if (!s.stoppedAt) return res.json({ paused: false }); res.json({ paused: true, pausedMs: Date.now()-s.stoppedAt, phantom: defaultStore.agent.getPhantomValue(Date.now()-s.stoppedAt) }); });
+app.get('/api/retention/patterns',  (_, res) => res.json(defaultStore.agent.storePatterns));
+app.post('/api/retention/signal',   (req, res) => { console.log('[Retention] Signal:', req.body?.signal, req.body?.context); res.json({ received: true }); });
+app.post('/api/retention/digest/send', async (_, res) => { const r = await digest.send(); broadcast({ type: 'weekly_digest_sent', timestamp: Date.now() }); res.json({ ok: true, result: r }); });
+
+// Webhooks
+app.post('/webhooks/shopify', (req, res) => {
+  const topic   = req.headers['x-shopify-topic'];
+  const hmac    = req.headers['x-shopify-hmac-sha256'];
+  const rawBody = req.body;
+  if (!verifyShopifyWebhook(rawBody, hmac)) return res.status(401).send('Unauthorized');
+  const payload = JSON.parse(rawBody.toString());
+  const event   = webhookToEvent(topic, payload);
+  if (event) {
+    broadcast({ type: 'webhook_event', event, storeId: DEFAULT_STORE, timestamp: Date.now() });
+    // Trigger immediate agent cycle on high-value events
+    if (['cart_event','order_created'].includes(event.type) && !defaultStore.agent.isRunning) {
+      defaultStore.agent.runCycle();
+    }
+  }
+  res.status(200).send('OK');
 });
 
-app.post('/api/retention/digest/send', async (_, res) => {
-  const result = await digest.send();
-  broadcast({ type: 'weekly_digest_sent', timestamp: Date.now() });
-  res.json({ success: true, result });
+app.post('/api/webhooks/register', async (req, res) => {
+  const { callbackBaseUrl } = req.body ?? {};
+  if (!process.env.SHOPIFY_ACCESS_TOKEN) return res.status(400).json({ error: 'No Shopify token configured' });
+  const results = await registerWebhooks(DEFAULT_STORE, process.env.SHOPIFY_ACCESS_TOKEN, callbackBaseUrl || `http://localhost:${process.env.PORT || 3001}`);
+  res.json({ results });
 });
 
 // Setup wizard connection tests
@@ -139,17 +161,13 @@ app.post('/api/test/anthropic', async (req, res) => {
 
 app.post('/api/test/shopify', async (req, res) => {
   const { store, token } = req.body ?? {};
-  if (!store || !token?.startsWith('shpat_')) return res.status(400).json({ error: 'Invalid credentials' });
+  if (!store || !token?.startsWith('shpat_')) return res.status(400).json({ error: 'Invalid credentials — need shpat_ token from Custom App' });
   try {
     const r = await fetch(`https://${store}.myshopify.com/admin/api/2024-01/shop.json`, { headers: { 'X-Shopify-Access-Token': token } });
     if (!r.ok) throw new Error(`Shopify ${r.status}`);
     const { shop } = await r.json();
-    // Pillar 1: estimate recoverable value for setup projection
-    const estimatedMonthlyOrders = 200;
-    const estimatedAbandonRate = 0.68;
-    const estimatedAvgCart = 85;
-    const recoverable = Math.round(estimatedMonthlyOrders * estimatedAbandonRate * estimatedAvgCart * 0.12);
-    res.json({ shopName: shop.name, plan: shop.plan_name, estimatedRecoverable: recoverable });
+    const estRecoverable = Math.round(200 * 0.68 * 85 * 0.12);
+    res.json({ shopName: shop.name, plan: shop.plan_name, currency: shop.currency, estimatedRecoverable: estRecoverable });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
@@ -174,33 +192,11 @@ app.post('/api/test/slack', async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ── Start ──────────────────────────────────────────────────────────────────
-const agent = new STOREmindAgent(broadcast);
-const PORT  = parseInt(process.env.PORT ?? '3001');
-
+// ── Start ─────────────────────────────────────────────────────────────────
+const PORT = parseInt(process.env.PORT ?? '3001');
 httpServer.listen(PORT, () => {
-  console.log(`\n╔══════════════════════════════════╗\n║  STOREmind Backend v2.0          ║\n║  HTTP : http://localhost:${PORT}    ║\n║  WS   : ws://localhost:${PORT}     ║\n║  Retention layer: ACTIVE          ║\n╚══════════════════════════════════╝\n`);
-  // Automation: start automatically if key present and AUTO_START not explicitly false
-  const shouldStart = process.env.AUTO_START !== 'false';
-  if (shouldStart) {
-    console.log('[STOREmind] AUTO_START active — agent launching in 3s');
-    setTimeout(() => agent.start(), 3000); // brief delay for WS clients to connect first
-  } else {
-    console.log('[STOREmind] AUTO_START=false — waiting for manual start via dashboard or API');
-  }
+  console.log(`\n╔══════════════════════════════════════════╗\n║  STOREmind v3.0 — ${new Date().toLocaleTimeString()}               ║\n║  Store : ${DEFAULT_STORE.padEnd(30)}║\n║  HTTP  : http://localhost:${PORT}            ║\n║  WS    : ws://localhost:${PORT}?storeId=...  ║\n╚══════════════════════════════════════════╝\n`);
+  if (process.env.AUTO_START === 'true') defaultStore.agent.start();
 });
 
-// Automation: catch unhandled errors so process stays alive
-process.on('uncaughtException', (err) => {
-  console.error('[STOREmind] Uncaught exception (process staying alive):', err.message);
-});
-process.on('unhandledRejection', (reason) => {
-  console.error('[STOREmind] Unhandled rejection (process staying alive):', reason);
-});
-
-process.on('SIGINT', () => {
-  console.log('\n[STOREmind] Shutting down...');
-  digest.stop();
-  agent.stop();
-  process.exit(0);
-});
+process.on('SIGINT', () => { console.log('\n[STOREmind] Shutting down...'); digest.stop(); manager.stopAll(); process.exit(0); });
